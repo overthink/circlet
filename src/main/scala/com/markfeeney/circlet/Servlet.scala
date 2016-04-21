@@ -1,0 +1,81 @@
+package com.markfeeney.circlet
+
+import java.io.FileInputStream
+import java.security.cert.X509Certificate
+import collection.JavaConverters._
+
+import javax.servlet.http.{HttpServletResponse, HttpServletRequest}
+
+/**
+ * Functionaliy for translating between Servlet world and Circlet world.
+ */
+object Servlet {
+
+  /**
+   * Copies headers out of servlet response and into a simple Map. Headers
+   * with multiple values for the same name end up as a single comma separated
+   * string in the returned map.
+   */
+  private def headers(request: HttpServletRequest): Map[String, String] = {
+    request.getHeaderNames.asScala
+      .foldLeft(Map.empty[String, String]) { case (acc, headerName) =>
+        acc.updated(headerName, request.getHeaders(headerName).asScala.mkString(","))
+      }
+  }
+
+  private def sslClientCert(request: HttpServletRequest): Option[X509Certificate] = {
+    val obj: AnyRef = request.getAttribute("javax.servlet.request.X509Certificate")
+    // How do I know what type obj should be? http://stackoverflow.com/a/9913910/69689
+    val certs = obj.asInstanceOf[Array[X509Certificate]]
+    Option(certs).flatMap(_.headOption)
+  }
+
+  /** Convert a standard servlet request into a circlet HttpRequest. */
+  def buildRequest(request: HttpServletRequest): HttpRequest = {
+    HttpRequest(
+      serverPort = request.getServerPort,
+      serverName = request.getServerName,
+      remoteAddr = request.getRemoteAddr,
+      uri = request.getRequestURI,
+      queryString = Option(request.getQueryString),
+      scheme = Scheme.parse(request.getScheme),
+      requestMethod = HttpMethod.parse(request.getMethod),
+      protocol = request.getProtocol,
+      headers = headers(request),
+      sslClientCert = sslClientCert(request),
+      body = Option(request.getInputStream)
+    )
+  }
+
+  private def setHeaders(servletResponse: HttpServletResponse, headers: ResponseHeaders): Unit = {
+    ???
+  }
+
+  private def setBody(servletResponse: HttpServletResponse, body: ResponseBody): Unit = {
+    import ResponseBody._
+    body match {
+      case StringBody(string) =>
+        Cleanly(servletResponse.getWriter)(_.close()) { _.print(string) }
+      case SeqBody(strings) => ???
+      case StreamBody(inputStream) => ???
+      case FileBody(file) =>
+        Cleanly(new FileInputStream(file))(_.close()) { fis =>
+          setBody(servletResponse, StreamBody(fis))
+        }
+    }
+  }
+
+  /**
+   * Update the servlet resposne with relevant info from the Circlet response.
+   *
+   * @param servletResponse Might get updated
+   * @param response Source of info that might get copied to servletResponse.
+   */
+  def updateServletResponse(servletResponse: HttpServletResponse, response: HttpResponse): Unit = {
+    servletResponse.setStatus(response.status)
+    setHeaders(servletResponse, response.headers)
+    response.body.foreach { body =>
+      setBody(servletResponse, body)
+    }
+  }
+}
