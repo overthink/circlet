@@ -18,7 +18,7 @@ creating confusion with the term Servlet in meatspace conversations.
 
 ## Status
 
-New and untested!
+Unfinished, untested!
 
 ## Half-baked thoughts
 

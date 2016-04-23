@@ -14,7 +14,7 @@ package com.markfeeney.circlet
  */
 case class HttpResponse(
   status: Int,
-  headers: ResponseHeaders,
+  headers: ResponseHeaders = Map.empty,
   body: Option[ResponseBody],
   attrs: Map[String, AnyRef] = Map.empty) {
 

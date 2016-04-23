@@ -1,6 +1,6 @@
 package com.markfeeney.circlet
 
-import java.io.FileInputStream
+import java.io.{InputStream, OutputStream, FileInputStream}
 import java.security.cert.X509Certificate
 import collection.JavaConverters._
 
@@ -48,7 +48,40 @@ object Servlet {
   }
 
   private def setHeaders(servletResponse: HttpServletResponse, headers: ResponseHeaders): Unit = {
-    ???
+    import ResponseHeaderValue._
+    headers.foreach { case (k, v) =>
+        v match {
+          case Single(value) =>
+            servletResponse.setHeader(k, value)
+          case Multi(values) =>
+            values.foreach { value =>
+              servletResponse.addHeader(k, value)
+            }
+        }
+    }
+    // Some headers must be set through specific methods
+    headers.get("Content-Type").foreach { value =>
+      servletResponse.setContentType(value.asString)
+    }
+  }
+
+  /**
+   * Copy all bytes from `from` to `to`. Uses its own buffer. Doesn't close anything.
+   * @param from Source of bytes
+   * @param to Destination of bytes
+   */
+  private def copy(from: InputStream, to: OutputStream): Unit = {
+    // not idiomatic Scala; trying to avoid allocations
+    val buffer = new Array[Byte](4096)
+    var done = false
+    while (!done) {
+      val n = from.read(buffer)
+      if (n > 0) {
+        to.write(buffer, 0, n)
+      } else {
+        done = true
+      }
+    }
   }
 
   private def setBody(servletResponse: HttpServletResponse, body: ResponseBody): Unit = {
@@ -56,8 +89,14 @@ object Servlet {
     body match {
       case StringBody(string) =>
         Cleanly(servletResponse.getWriter)(_.close()) { _.print(string) }
-      case SeqBody(strings) => ???
-      case StreamBody(inputStream) => ???
+      case SeqBody(xs) =>
+        Cleanly(servletResponse.getWriter)(_.close()) { writer =>
+          xs.foreach { x => writer.print(x.toString) }
+        }
+      case StreamBody(inputStream) =>
+        Cleanly(inputStream)(_.close()) { output =>
+          copy(inputStream, servletResponse.getOutputStream)
+        }
       case FileBody(file) =>
         Cleanly(new FileInputStream(file))(_.close()) { fis =>
           setBody(servletResponse, StreamBody(fis))
