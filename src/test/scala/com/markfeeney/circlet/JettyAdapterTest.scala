@@ -9,16 +9,18 @@ import org.scalatest.FunSuite
 class JettyAdapterTest extends FunSuite {
 
   private def findFreePort: Int = {
-    // not foolproof, but not bad
-    val ss = new ServerSocket(0)
-    ss.getLocalPort
+    Cleanly(new ServerSocket(0))(_.close)(_.getLocalPort).right.get
   }
 
   private case class TestServer(server: Server, port: Int)
 
   private def testServer(h: Handler)(f: TestServer => Unit): Unit = {
 
-    val opts = JettyOptions(join = false, port = findFreePort)
+    val opts = JettyOptions(
+      join = false,
+      port = findFreePort
+    )
+
     val result = Cleanly(JettyAdapter.run(h, opts))(_.stop()) { server =>
       f(TestServer(server, opts.port))
     }
@@ -39,12 +41,10 @@ class JettyAdapterTest extends FunSuite {
     }
   }
 
-  ignore("Can create and stop a Jetty server") {
+  test("Can create and stop a Jetty server") {
     testServer(helloWorld) { case TestServer(server, port) =>
       assert(server.isRunning)
-      Unirest.setTimeouts(1000, 1000) // TODO temp hack
       val resp = Unirest.get("http://localhost:" + port).asString()
-      // TODO: getting empty server body
       assert(resp.getBody == "Hello world")
     }
   }
