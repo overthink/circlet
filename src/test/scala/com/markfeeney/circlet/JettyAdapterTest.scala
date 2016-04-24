@@ -1,7 +1,7 @@
 package com.markfeeney.circlet
 
 import java.net.ServerSocket
-import com.markfeeney.circlet.ResponseBody.StringBody
+import com.mashape.unirest.http
 import com.mashape.unirest.http.Unirest
 import org.eclipse.jetty.server.Server
 import org.scalatest.FunSuite
@@ -14,26 +14,30 @@ class JettyAdapterTest extends FunSuite {
 
   private case class TestServer(server: Server, port: Int)
 
-  private def testServer(h: Handler)(f: TestServer => Unit): Unit = {
-
-    val opts = JettyOptions(
+  private def testServer(h: Handler, opts: JettyOptions)(f: TestServer => Unit): Unit = {
+    val opts0 = opts.copy(
       join = false,
       port = findFreePort
     )
-
-    val result = Cleanly(JettyAdapter.run(h, opts))(_.stop()) { server =>
-      f(TestServer(server, opts.port))
+    val result = Cleanly(JettyAdapter.run(h, opts0))(_.stop()) { server =>
+      f(TestServer(server, opts0.port))
     }
-
-    result match {
-      case Left(e) => throw e
-      case Right(_) =>
-    }
+    result.left.foreach(e => throw e)
   }
 
-  private def helloWorld: Handler = { req =>
-    Some(HttpResponse(status = 200, body = Some(StringBody("Hello world"))))
+  private def testServer(h: Handler)(f: TestServer => Unit): Unit = {
+    testServer(h, JettyOptions())(f)
   }
+
+//  private def testServer0(f: TestServer => Unit): Unit = {
+//    testServer(helloWorld)(f)
+//  }
+
+  private def helloWorld: Handler = { _ =>
+    HttpResponse(body = "Hello world")
+  }
+
+  private def get(port: Int): http.HttpResponse[String] = Unirest.get("http://localhost:" + port).asString
 
   test("Jetty server start/running/stop works") {
     testServer(helloWorld) { case TestServer(server, _) =>
@@ -41,11 +45,9 @@ class JettyAdapterTest extends FunSuite {
     }
   }
 
-  test("Can create and stop a Jetty server") {
+  test("default config has a single working connector") {
     testServer(helloWorld) { case TestServer(server, port) =>
-      assert(server.isRunning)
-      val resp = Unirest.get("http://localhost:" + port).asString()
-      assert(resp.getBody == "Hello world")
+      assert(get(port).getBody == "Hello world")
     }
   }
 

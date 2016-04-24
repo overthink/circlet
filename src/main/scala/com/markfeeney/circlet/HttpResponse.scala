@@ -13,7 +13,7 @@ package com.markfeeney.circlet
  * @param attrs Extra key/value data attached the the response.
  */
 case class HttpResponse(
-  status: Int,
+  status: Int = 200,
   headers: ResponseHeaders = Map.empty,
   body: Option[ResponseBody],
   attrs: Map[String, AnyRef] = Map.empty) {

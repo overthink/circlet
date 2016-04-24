@@ -111,10 +111,8 @@ object JettyAdapter {
     val ah = new AbstractHandler {
       override def handle(target: String, baseRequest: Request, request: HttpServletRequest, response: HttpServletResponse): Unit = {
         val req: HttpRequest = Servlet.buildRequest(request)
-        handler(req).foreach { resp =>
-          Servlet.updateServletResponse(response, resp)
-          baseRequest.setHandled(true)
-        }
+        Servlet.updateServletResponse(response, handler(req))
+        baseRequest.setHandled(true)
       }
     }
 
