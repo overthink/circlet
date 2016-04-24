@@ -1,8 +1,11 @@
 package com.markfeeney.circlet
 
 import javax.servlet.http.{HttpServletResponse, HttpServletRequest}
+import com.markfeeney.circlet.JettyOptions.ClientAuth.{Want, Need}
+import com.markfeeney.circlet.JettyOptions.SslStoreConfig.{Instance, Path}
 import org.eclipse.jetty.server._
 import org.eclipse.jetty.server.handler.AbstractHandler
+import org.eclipse.jetty.util.ssl.SslContextFactory
 import org.eclipse.jetty.util.thread.{QueuedThreadPool, ThreadPool}
 
 /**
@@ -39,17 +42,62 @@ object JettyAdapter {
     println("setting port on connector: " + opts.port)
     connector.setPort(opts.port)
     opts.host.foreach(connector.setHost)
-    connector.setIdleTimeout(opts.maxIdleTimeout)
+    connector.setIdleTimeout(opts.maxIdleTime)
     connector
+  }
+
+  private def sslContextFactory(opts: JettyOptions): SslContextFactory = {
+    val context = new SslContextFactory
+
+    opts.keyStore.foreach {
+      case Path(path) => context.setKeyStorePath(path)
+      case Instance(keyStore) => context.setKeyStore(keyStore)
+    }
+    opts.keyStorePassword.foreach(context.setKeyStorePassword)
+
+    opts.trustStore.foreach {
+      case Path(path) => context.setTrustStorePath(path)
+      case Instance(keyStore) => context.setTrustStore(keyStore)
+    }
+    opts.trustStorePassword.foreach(context.setTrustStorePassword)
+
+    opts.clientAuth.foreach {
+      case Need => context.setNeedClientAuth(true)
+      case Want => context.setWantClientAuth(true)
+    }
+
+    if (opts.excludeCiphers.nonEmpty) {
+      context.setExcludeCipherSuites(opts.excludeCiphers: _*)
+    }
+    if (opts.excludeProtocols.nonEmpty) {
+      context.setExcludeProtocols(opts.excludeProtocols: _*)
+    }
+    context
+  }
+
+  private def sslConnector(server: Server, opts: JettyOptions): ServerConnector = {
+    val httpFactory = {
+      val config = httpConfig(opts)
+      config.setSecureScheme("https")
+      config.setSecurePort(opts.sslPort)
+      config.addCustomizer(new SecureRequestCustomizer)
+      new HttpConnectionFactory(config)
+    }
+    val sslFactory = new SslConnectionFactory(sslContextFactory(opts), "http/1.1")
+    val conn = serverConnector(server, Seq(httpFactory, sslFactory))
+    conn.setPort(opts.sslPort)
+    opts.host.foreach(conn.setHost)
+    conn.setIdleTimeout(opts.maxIdleTime)
+    conn
   }
 
   private def createServer(opts: JettyOptions): Server = {
     val server = new Server(createThreadPool(opts))
-    if (opts.enableHttp) {
+    if (opts.allowHttp) {
       server.addConnector(httpConnector(server, opts))
     }
-    if (opts.enableSsl) {
-      ???
+    if (opts.allowSsl) {
+      server.addConnector(sslConnector(server, opts))
     }
     server
   }
