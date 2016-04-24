@@ -39,8 +39,7 @@ object JettyAdapter {
   private def httpConnector(server: Server, opts: JettyOptions): ServerConnector = {
     val factory = new HttpConnectionFactory(httpConfig(opts))
     val connector = serverConnector(server, Seq(factory))
-    println("setting port on connector: " + opts.port)
-    connector.setPort(opts.port)
+    connector.setPort(opts.httpPort)
     opts.host.foreach(connector.setHost)
     connector.setIdleTimeout(opts.maxIdleTime)
     connector
@@ -84,7 +83,7 @@ object JettyAdapter {
       new HttpConnectionFactory(config)
     }
     val sslFactory = new SslConnectionFactory(sslContextFactory(opts), "http/1.1")
-    val conn = serverConnector(server, Seq(httpFactory, sslFactory))
+    val conn = serverConnector(server, Seq(sslFactory, httpFactory))
     conn.setPort(opts.sslPort)
     opts.host.foreach(conn.setHost)
     conn.setIdleTimeout(opts.maxIdleTime)
@@ -107,7 +106,6 @@ object JettyAdapter {
    */
   def run(handler: Handler, opts: JettyOptions): Server = {
     // wrap given handler in Jetty handler instance
-    println("running jetty with opts: " + opts)
     val ah = new AbstractHandler {
       override def handle(target: String, baseRequest: Request, request: HttpServletRequest, response: HttpServletResponse): Unit = {
         val req: HttpRequest = Servlet.buildRequest(request)

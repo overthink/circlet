@@ -1,6 +1,7 @@
 package com.markfeeney.circlet
 
 import java.security.KeyStore
+import scala.language.implicitConversions
 import com.markfeeney.circlet.JettyOptions.{ClientAuth, SslStoreConfig}
 import org.eclipse.jetty.server.Server
 
@@ -9,7 +10,7 @@ import org.eclipse.jetty.server.Server
  *
  * @param join If true, calls join() on Server instance (blocking till server shuts down)
  * @param host The network interface connectors will bind to. If None or 0.0.0.0, binds to all interfaces.
- * @param port A ServerConnector will be created listening on this port.
+ * @param httpPort A ServerConnector will be created listening on this port.
  * @param maxThreads Max threads in the threadpool used by connectors to run (eventually) the handler.
  * @param minThreads Minimum threads to keep alive in the Jetty threadpool.
  * @param daemonThreads If true, all threads in Jetty's threadpool will be daemon threads.
@@ -37,7 +38,7 @@ import org.eclipse.jetty.server.Server
 case class JettyOptions(
   join: Boolean = true,
   host: Option[String] = None,
-  port: Int = 80,
+  httpPort: Int = 80,
   maxThreads: Int = 50,
   minThreads: Int = 8,
   daemonThreads: Boolean = false,
@@ -67,6 +68,9 @@ object JettyOptions {
   object SslStoreConfig {
     case class Path(path: String) extends SslStoreConfig
     case class Instance(keystore: KeyStore) extends SslStoreConfig
+    implicit def stringToPath(path: String): Option[SslStoreConfig] = {
+      Some(Path(path))
+    }
   }
 
   sealed trait ClientAuth
