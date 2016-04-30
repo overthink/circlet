@@ -24,14 +24,16 @@ case class HttpRequest(
   serverName: String,
   remoteAddr: String,
   uri: String,
-  queryString: Option[String],
-  scheme: Scheme,
-  requestMethod: HttpMethod,
-  protocol: String,
-  sslClientCert: Option[X509Certificate],
-  headers: Map[String, String],
-  body: Option[InputStream],
+  queryString: Option[String] = None,
+  scheme: Scheme = Scheme.Http,
+  requestMethod: HttpMethod = HttpMethod.Get,
+  protocol: String = "HTTP/1.1",
+  sslClientCert: Option[X509Certificate] = None,
+  headers: Map[String, String] = Map.empty,
+  body: Option[InputStream] = None,
   attrs: Map[String, AnyRef] = Map.empty) {
+
+  require(uri.startsWith("/"))
 
   /**
    * Helper for easily adding things to the attrs map.
