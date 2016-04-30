@@ -1,6 +1,7 @@
 package com.markfeeney.circlet
 
 import java.net.ServerSocket
+import javax.servlet.http.{HttpServletResponse, HttpServletRequest}
 import scala.collection.JavaConverters._
 import com.mashape.unirest.http
 import com.mashape.unirest.http.Unirest
@@ -9,6 +10,8 @@ import org.apache.http.conn.ssl.{SSLConnectionSocketFactory, TrustSelfSignedStra
 import org.apache.http.impl.client.HttpClients
 import org.apache.http.ssl.SSLContextBuilder
 import org.eclipse.jetty.server._
+import org.eclipse.jetty.server.handler.AbstractHandler
+import org.eclipse.jetty.util.thread.QueuedThreadPool
 import org.scalatest.FunSuite
 
 class JettyAdapterTest extends FunSuite {
@@ -129,7 +132,80 @@ class JettyAdapterTest extends FunSuite {
       assert(sslFactories(0).isInstanceOf[SslConnectionFactory])
       assert(sslFactories(1).isInstanceOf[HttpConnectionFactory])
     }
-
   }
 
+  test("thread pool non-daemon by default") {
+    testServer(JettyOptions()) { case TestServer(server, _) =>
+      assert(server.getThreadPool.isInstanceOf[QueuedThreadPool])
+      val p = server.getThreadPool.asInstanceOf[QueuedThreadPool]
+      assert(!p.isDaemon)
+    }
+  }
+
+  // create server with opts, then inspect server to see if settings are actually applied
+  private def assertThreadPool(opts: JettyOptions): Unit = {
+    testServer(opts) { case TestServer(server, _) =>
+      assert(server.getThreadPool.isInstanceOf[QueuedThreadPool])
+      val p = server.getThreadPool.asInstanceOf[QueuedThreadPool]
+      assert(p.getMaxThreads == opts.maxThreads)
+      assert(p.getMinThreads == opts.minThreads)
+      assert(p.isDaemon == opts.daemonThreads)
+    }
+  }
+
+  test("thread pool settings can be changed") {
+    assertThreadPool(JettyOptions()) // defaults
+    assertThreadPool(JettyOptions(maxThreads = 99, minThreads = 1, daemonThreads = true))
+  }
+
+  test("configFn can override other settings") {
+    val noopHandler= new AbstractHandler {
+      override def handle(target: String, baseRequest: Request, request: HttpServletRequest, response: HttpServletResponse): Unit = {}
+    }
+    val f: Server => Unit = { s =>
+      s.getThreadPool.asInstanceOf[QueuedThreadPool].setDaemon(false)
+      s.setHandler(noopHandler)
+    }
+    val opts = JettyOptions(daemonThreads = true, configFn = f)
+    testServer(helloWorld, opts) { case TestServer(server, _) =>
+      assert(!server.getThreadPool.asInstanceOf[QueuedThreadPool].isDaemon)
+      assert(server.getHandler eq noopHandler, "Handler is not the default helloWorld handler")
+    }
+  }
+
+  // ensure config object matches JettyOptions
+  private def assertHttpConfig(opts: JettyOptions, config: HttpConfiguration): Unit = {
+    assert(config.getSendDateHeader == opts.sendDateHeader)
+    assert(config.getOutputBufferSize == opts.outputBufferSize)
+    assert(config.getRequestHeaderSize == opts.requestHeaderSize)
+    assert(config.getResponseHeaderSize == opts.responseHeaderSize)
+    assert(config.getSendServerVersion == opts.sendServerVersion)
+  }
+
+  test("can change http config") {
+    val opts = JettyOptions(
+      allowHttp = true,
+      allowSsl = true,
+      sendDateHeader = false,
+      outputBufferSize = 9000,
+      requestHeaderSize = 10000,
+      responseHeaderSize = 11000,
+      sendServerVersion = false
+    )
+    testServer(opts) { case TestServer(server, _) =>
+      val cons: Array[Connector] = server.getConnectors
+      val httpConn = cons(0)
+      val sslConn = cons(1)
+      assert(2 == cons.length, "one connector for http, one for https")
+      val httpFactories = factories(httpConn)
+      assert(1 == httpFactories.length)
+      assert(httpFactories.head.isInstanceOf[HttpConnectionFactory])
+      assertHttpConfig(opts, httpFactories.head.asInstanceOf[HttpConnectionFactory].getHttpConfiguration)
+      val sslFactories = factories(sslConn)
+      assert(2 == sslFactories.length)
+      assert(sslFactories(0).isInstanceOf[SslConnectionFactory])
+      assert(sslFactories(1).isInstanceOf[HttpConnectionFactory])
+      assertHttpConfig(opts, sslFactories(1).asInstanceOf[HttpConnectionFactory].getHttpConfiguration)
+    }
+  }
 }
