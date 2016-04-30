@@ -16,6 +16,9 @@ import org.scalatest.FunSuite
 
 class JettyAdapterTest extends FunSuite {
 
+  // disable logging from Jetty
+  org.eclipse.jetty.util.log.Log.setLog(new NoJettyLogging)
+
   def makeUnirestAllowSelfSignedCerts(): Unit = {
     val builder = new SSLContextBuilder
     builder.loadTrustMaterial(null, new TrustSelfSignedStrategy)
