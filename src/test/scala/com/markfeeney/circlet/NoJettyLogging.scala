@@ -2,6 +2,7 @@ package com.markfeeney.circlet
 
 import org.eclipse.jetty.util.log.Logger
 
+/** Used to disable Jetty logging in tests. */
 class NoJettyLogging extends Logger {
   override def warn(msg: String, args: AnyRef*): Unit = {}
   override def warn(thrown: Throwable): Unit = {}

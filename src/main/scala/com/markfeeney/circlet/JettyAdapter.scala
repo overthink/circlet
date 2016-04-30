@@ -3,7 +3,7 @@ package com.markfeeney.circlet
 import javax.servlet.http.{HttpServletResponse, HttpServletRequest}
 import com.markfeeney.circlet.JettyOptions.ClientAuth.{Want, Need}
 import com.markfeeney.circlet.JettyOptions.SslStoreConfig.{Instance, Path}
-import org.eclipse.jetty.server._
+import org.eclipse.jetty.server.{Request => JettyRequest, _}
 import org.eclipse.jetty.server.handler.AbstractHandler
 import org.eclipse.jetty.util.ssl.SslContextFactory
 import org.eclipse.jetty.util.thread.{QueuedThreadPool, ThreadPool}
@@ -107,8 +107,12 @@ object JettyAdapter {
   def run(handler: Handler, opts: JettyOptions): Server = {
     // wrap given handler in Jetty handler instance
     val ah = new AbstractHandler {
-      override def handle(target: String, baseRequest: Request, request: HttpServletRequest, response: HttpServletResponse): Unit = {
-        val req: HttpRequest = Servlet.buildRequest(request)
+      override def handle(
+          target: String,
+          baseRequest: JettyRequest,
+          request: HttpServletRequest,
+          response: HttpServletResponse): Unit = {
+        val req: Request = Servlet.buildRequest(request)
         Servlet.updateServletResponse(response, handler(req))
         baseRequest.setHandled(true)
       }

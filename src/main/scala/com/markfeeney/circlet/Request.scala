@@ -19,7 +19,7 @@ import java.security.cert.X509Certificate
  * @param body The request body, if present.
  * @param attrs Other info tacked on to the request.
  */
-case class HttpRequest(
+case class Request(
   serverPort: Int,
   serverName: String,
   remoteAddr: String,
@@ -37,11 +37,12 @@ case class HttpRequest(
 
   /**
    * Helper for easily adding things to the attrs map.
+ *
    * @param key Name of the thing to add
    * @param value The thing to add
    * @return A new HttpRequest with key/value added to attrs.
    */
-  def updated(key: String, value: AnyRef): HttpRequest = {
+  def updated(key: String, value: AnyRef): Request = {
     this.copy(attrs = attrs.updated(key, value))
   }
 }

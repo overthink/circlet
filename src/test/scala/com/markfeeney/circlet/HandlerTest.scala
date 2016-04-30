@@ -13,7 +13,7 @@ class HandlerTest extends FunSuite {
       println(s"got request $req")
 
       println("acquire expensive resource")
-      val resp = HttpResponse(status = 200, body = "This is a body!")
+      val resp = Response(status = 200, body = "This is a body!")
       val ret = cont(resp)
       println("release expensive resource")
       ret
@@ -21,7 +21,7 @@ class HandlerTest extends FunSuite {
 
     val app0: CpsHandler = Head.apply(app)
 
-    val req = HttpRequest(
+    val req = Request(
       uri = "/test",
       serverPort = 80,
       serverName = "foobar.com",

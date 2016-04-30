@@ -9,7 +9,7 @@ import com.mashape.unirest.http.exceptions.UnirestException
 import org.apache.http.conn.ssl.{SSLConnectionSocketFactory, TrustSelfSignedStrategy}
 import org.apache.http.impl.client.HttpClients
 import org.apache.http.ssl.SSLContextBuilder
-import org.eclipse.jetty.server._
+import org.eclipse.jetty.server.{Request=>JettyRequest, _}
 import org.eclipse.jetty.server.handler.AbstractHandler
 import org.eclipse.jetty.util.thread.QueuedThreadPool
 import org.scalatest.FunSuite
@@ -51,7 +51,7 @@ class JettyAdapterTest extends FunSuite {
   }
 
   private def helloWorld: Handler = { _ =>
-    HttpResponse(body = "Hello world")
+    Response(body = "Hello world")
   }
 
   sealed trait Scheme
@@ -163,7 +163,7 @@ class JettyAdapterTest extends FunSuite {
 
   test("configFn can override other settings") {
     val noopHandler= new AbstractHandler {
-      override def handle(target: String, baseRequest: Request, request: HttpServletRequest, response: HttpServletResponse): Unit = {}
+      override def handle(target: String, baseRequest: JettyRequest, request: HttpServletRequest, response: HttpServletResponse): Unit = {}
     }
     val f: Server => Unit = { s =>
       s.getThreadPool.asInstanceOf[QueuedThreadPool].setDaemon(false)

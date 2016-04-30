@@ -12,7 +12,7 @@ package com.markfeeney.circlet
  *             response's status code.
  * @param attrs Extra key/value data attached the the response.
  */
-case class HttpResponse(
+case class Response(
   status: Int = 200,
   headers: ResponseHeaders = Map.empty,
   body: Option[ResponseBody],
@@ -20,11 +20,12 @@ case class HttpResponse(
 
   /**
    * Helper for easily adding things to the attrs map.
+ *
    * @param key Name of the thing to add
    * @param value The thing to add
    * @return A new HttpRequest with key/value added to attrs.
    */
-  def updated(key: String, value: AnyRef): HttpResponse = {
+  def updated(key: String, value: AnyRef): Response = {
     this.copy(attrs = attrs.updated(key, value))
   }
 }

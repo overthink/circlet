@@ -31,8 +31,8 @@ object Servlet {
   }
 
   /** Convert a standard servlet request into a circlet HttpRequest. */
-  def buildRequest(request: HttpServletRequest): HttpRequest = {
-    HttpRequest(
+  def buildRequest(request: HttpServletRequest): Request = {
+    Request(
       serverPort = request.getServerPort,
       serverName = request.getServerName,
       remoteAddr = request.getRemoteAddr,
@@ -110,7 +110,7 @@ object Servlet {
    * @param servletResponse Might get updated
    * @param response Source of info that might get copied to servletResponse.
    */
-  def updateServletResponse(servletResponse: HttpServletResponse, response: HttpResponse): Unit = {
+  def updateServletResponse(servletResponse: HttpServletResponse, response: Response): Unit = {
     servletResponse.setStatus(response.status)
     setHeaders(servletResponse, response.headers)
     response.body.foreach { body =>

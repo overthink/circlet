@@ -9,14 +9,14 @@ import com.markfeeney.circlet._
 object Head {
   //def apply(h: Handler2): Handler2 = {
   def apply: CpsMiddleware = { (h: CpsHandler) =>
-    (req: HttpRequest, cont: HttpResponse => Done.type) => {
+    (req: Request, cont: Response => Done.type) => {
       println(s"Head middleware: unmolested request $req")
-      val req0: HttpRequest =
+      val req0: Request =
         req.requestMethod match {
           case HttpMethod.Head => req.copy(requestMethod = HttpMethod.Get)
           case _ => req
         }
-      val cont0: HttpResponse => Done.type = { resp =>
+      val cont0: Response => Done.type = { resp =>
         println(s"Throwing away old body: '${resp.body}'")
         cont(resp.copy(body = None))
       }
