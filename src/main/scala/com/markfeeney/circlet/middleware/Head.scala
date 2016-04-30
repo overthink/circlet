@@ -7,7 +7,6 @@ import com.markfeeney.circlet._
  * as usual, then throws away the body before returning.
  */
 object Head {
-  //def apply(h: Handler2): Handler2 = {
   def apply: CpsMiddleware = { (h: CpsHandler) =>
     (req: Request, cont: Response => Done.type) => {
       println(s"Head middleware: unmolested request $req")
