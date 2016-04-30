@@ -8,7 +8,7 @@ import com.markfeeney.circlet._
  */
 object Head {
   //def apply(h: Handler2): Handler2 = {
-  def apply: Middleware2 = { (h: Handler2) =>
+  def apply: CpsMiddleware = { (h: CpsHandler) =>
     (req: HttpRequest, cont: HttpResponse => Done.type) => {
       println(s"Head middleware: unmolested request $req")
       val req0: HttpRequest =

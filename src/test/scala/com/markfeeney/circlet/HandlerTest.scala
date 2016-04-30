@@ -9,7 +9,7 @@ class HandlerTest extends FunSuite {
   }
 
   test("fancy") {
-    val app: Handler2 = { case (req, cont) =>
+    val app: CpsHandler = { case (req, cont) =>
       println(s"got request $req")
 
       println("acquire expensive resource")
@@ -19,7 +19,7 @@ class HandlerTest extends FunSuite {
       ret
     }
 
-    val app0: Handler2 = Head.apply(app)
+    val app0: CpsHandler = Head.apply(app)
 
     val req = HttpRequest(
       uri = "/test",
