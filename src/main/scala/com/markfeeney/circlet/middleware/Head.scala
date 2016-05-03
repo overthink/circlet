@@ -7,19 +7,17 @@ import com.markfeeney.circlet._
  * as usual, then throws away the body before returning.
  */
 object Head {
-  def apply: CpsMiddleware = { (h: CpsHandler) =>
-    (req: Request, cont: Response => Done.type) => {
+  def apply: CpsMiddleware = cpsH =>
+    (req, k) => {
       println(s"Head middleware: unmolested request $req")
       val req0: Request =
         req.requestMethod match {
           case HttpMethod.Head => req.copy(requestMethod = HttpMethod.Get)
           case _ => req
         }
-      val cont0: Response => Done.type = { resp =>
+      cpsH(req0, resp => {
         println(s"Throwing away old body: '${resp.body}'")
-        cont(resp.copy(body = None))
-      }
-      h(req0, cont0)
+        k(resp.copy(body = None))
+      })
     }
-  }
 }
