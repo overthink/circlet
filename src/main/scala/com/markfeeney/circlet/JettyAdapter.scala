@@ -104,7 +104,7 @@ object JettyAdapter {
   /**
    * Create, configure and start a Jetty server instance and use it to run handler.
    */
-  def run(handler: Handler, opts: JettyOptions): Server = {
+  def run(handler: CpsHandler, opts: JettyOptions): Server = {
     // wrap given handler in Jetty handler instance
     val ah = new AbstractHandler {
       override def handle(
@@ -113,7 +113,10 @@ object JettyAdapter {
           request: HttpServletRequest,
           response: HttpServletResponse): Unit = {
         val req: Request = Servlet.buildRequest(request)
-        Servlet.updateServletResponse(response, handler(req))
+        handler(req, resp => {
+          Servlet.updateServletResponse(response, resp)
+          Done
+        })
         baseRequest.setHandled(true)
       }
     }
