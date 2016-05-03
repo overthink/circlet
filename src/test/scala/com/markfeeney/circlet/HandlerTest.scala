@@ -9,8 +9,6 @@ class HandlerTest extends FunSuite {
       Response(status = 200, body = "simple handler response")
     }
 
-    import com.markfeeney.circlet.CpsConverters._
-
     val app0 = Head.apply(app)
 
     val req = Request(
@@ -21,11 +19,9 @@ class HandlerTest extends FunSuite {
       requestMethod = HttpMethod.Head
     )
 
-    app0(req, resp => {
-      assert(resp.status == 200)
-      assert(resp.body.isEmpty)
-      Done
-    })
+    val resp = app0(req)
+    assert(resp.status == 200)
+    assert(resp.body.isEmpty)
 
   }
 
@@ -40,7 +36,7 @@ class HandlerTest extends FunSuite {
       ret
     }
 
-    val app0: CpsHandler = Head.apply(app)
+    val app0: CpsHandler = Head.cps(app)
 
     val req = Request(
       uri = "/test",
@@ -51,7 +47,8 @@ class HandlerTest extends FunSuite {
     )
 
     app0(req, resp => {
-      println(s"Got resp $resp")
+      assert(resp.status == 200)
+      assert(resp.body.isEmpty)
       Done
     })
   }

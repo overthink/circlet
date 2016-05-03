@@ -1,23 +1,27 @@
 package com.markfeeney.circlet.middleware
 
 import com.markfeeney.circlet._
+import com.markfeeney.circlet.CpsConverters.middleware2Cps
 
 /**
- * Middleware to make HEAD request handling easier. Changes request into a GET, processes
- * as usual, then throws away the body before returning.
+ * Middleware to make HEAD request handling easier. Turns HEAD requests into GET requests
+ * internally and throws out the response body before returning.
  */
 object Head {
-  def apply: CpsMiddleware = cpsH =>
-    (req, k) => {
-      println(s"Head middleware: unmolested request $req")
-      val req0: Request =
-        req.requestMethod match {
-          case HttpMethod.Head => req.copy(requestMethod = HttpMethod.Get)
-          case _ => req
-        }
-      cpsH(req0, resp => {
-        println(s"Throwing away old body: '${resp.body}'")
-        k(resp.copy(body = None))
-      })
+  def apply: Middleware = handler => {
+    req => {
+      val req0 = req.requestMethod match {
+        case HttpMethod.Head => req.copy(requestMethod = HttpMethod.Get)
+        case _ => req
+      }
+      val resp = handler(req0)
+      if (req.requestMethod == HttpMethod.Head) {
+        resp.copy(body = None)
+      } else {
+        resp
+      }
     }
+  }
+
+  def cps: CpsMiddleware = middleware2Cps(apply)
 }
