@@ -11,11 +11,20 @@ object CpsConverters {
     (request, k) => k(h(request))
   }
 
-  implicit def middleware2Cps(mw: Middleware): CpsMiddleware = {
-    // could this possibly be correct?
-    cpsH => (request, k) => {
-      cpsH(request, response => k(mw(_ => response)(request)))
+  // TBD if this should be publicly available
+  private def cps2Handler(cpsH: CpsHandler): Handler = {
+    var resp: Response = null // yes really, much evil here
+    request => {
+      cpsH(request, response => {
+        resp = response
+        Done
+      })
+      resp
     }
+  }
+
+  implicit def middleware2Cps(mw: Middleware): CpsMiddleware = {
+    cpsH => mw(cps2Handler(cpsH))
   }
 
 }
