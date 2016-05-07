@@ -24,4 +24,18 @@ object TestUtils {
       scheme = scheme
     )
   }
+
+  /**
+   * App (handler) that returns a "Hello World" body and X-Foo response header for all requests.
+   */
+  val hwApp: Handler = req => {
+    req.requestMethod match {
+      case HttpMethod.Get =>
+        // Add a header so we can be sure this code executed even if body is remmoved
+        Response(body = "Hello world", headers = Map("X-Foo" -> "42"))
+      case _ =>
+        Response(status = 404, body = "not found")
+    }
+  }
+
 }

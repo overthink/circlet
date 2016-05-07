@@ -10,6 +10,7 @@ import org.eclipse.jetty.util.thread.{QueuedThreadPool, ThreadPool}
 
 /**
  * Functionality for running handlers on Jetty.
+ * Largely a port of https://github.com/ring-clojure/ring/blob/4a3584570ad9e7b17f6b1c8a2a17934c1682f77d/ring-jetty-adapter/src/ring/adapter/jetty.clj
  */
 object JettyAdapter {
 

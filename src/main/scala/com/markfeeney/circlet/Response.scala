@@ -28,4 +28,11 @@ case class Response(
   def updated(key: String, value: AnyRef): Response = {
     this.copy(attrs = attrs.updated(key, value))
   }
+
+  /**
+   * Add a response header to this Response.  Returns a new Response.
+   */
+  def addHeader(name: String, value: ResponseHeaderValue): Response = {
+    this.copy(headers = this.headers.updated(name, value))
+  }
 }
