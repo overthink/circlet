@@ -6,8 +6,7 @@ allows (forces) you to write your applications as a function of
 type `HttpRequest => HttpResponse` rather than deal with Servlet or other more
 complicated web frameworks.
 
-Circlet is named after Ring in a very clever and original way, with the added 
-benefit of creating confusion with the term Servlet in meatspace conversations.
+Circlet is named after Ring in a very clever and original way.
 
 ## Project Goals
 
@@ -43,17 +42,16 @@ val helloWorld: Handler = request => {
 
 This is kind of a pain for simple cases, so I've provided [some conversions](src/main/scala/com/markfeeney/circlet/CpsConverters.scala) 
 to automatically convert simple handlers and middleware to their CPS counterparts. This means you 
-can largeley ignore CPS interface and write simple handlers and middleware unless you need fancy
-resource cleanup.
+can largeley ignore CPS and write simple handlers and middleware most of the time.
 
-My rationale for using CPS is to allow handlers to clean up any resources they've allocated before the 
-request is completely out of Circlet's control.  In particular, this is to support streaming responses. e.g.
+One scenario where you might want CPS is when a handler needs to clean up resources it has allocated, but
+not until the response body has been completely sent, e.g. in a streaming response. e.g.
  
 ```scala
 val streamingHandler: CpsHandler = (req, k) => {
   val conn = // get a db connection or some expensive resource needing cleanup
   try {
-    val resp = Response(body = makeLazySeq(req, conn))
+    val resp = Response(body = SeqBody(makeLazySeq(req, conn)))
     k(resp)
   } finally {
     conn.close()
@@ -61,15 +59,13 @@ val streamingHandler: CpsHandler = (req, k) => {
 }
 ```
 
-Ring has a pretty [cool way of achiving streaming](https://github.com/ring-clojure/ring/blob/d302502ea4da392016963d33bd81028bc761d8c8/ring-core/src/ring/util/io.clj#L26-L29), 
-but it involves an additional thread (which I don't love).  Haskell's [WAI](https://hackage.haskell.org/package/wai-3.2.1/docs/Network-Wai.html)
-(thanks [stebulus](https://github.com/stebulus)) uses CPS to 
-allow handlers to clean up without an additional thread, so I thought I'd give that a try. CPS 
-significantly complicates things (IMO), however, so I'm not sure if I'll keep this.  It's nice to 
-have the option but how commonly is it actually needed? TBD.
+A similar thing can be achieved in Ring using its [piped input stream](https://github.com/ring-clojure/ring/blob/d302502ea4da392016963d33bd81028bc761d8c8/ring-core/src/ring/util/io.clj#L26-L29), 
+but it involves an additional thread (which I don't love).  All this CPS business is borrowed directly
+from Haskell's [WAI](https://hackage.haskell.org/package/wai-3.2.1/docs/Network-Wai.html) (thanks [stebulus](https://github.com/stebulus)),
+which I should probably study more.
 
-I am definietly no expert here, so I probably haven't thought of/realized many things. Please 
-beware -- or better yet -- educate me.
+CPS significantly complicates writing (and more importantly, reading) handlers and middleware (IMO),
+so I'm not sure if I'll keep this.  It's nice to have the option, but how commonly is it actually needed? TBD.
 
 ## Other half-baked thoughts
 
