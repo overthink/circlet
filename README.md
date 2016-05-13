@@ -20,7 +20,18 @@ Circlet is named after Ring in a very clever and original way.
 
 ## Status
 
-Unfinished, some unit tests, untested (and largely unusable still) in production!
+Minimal middleware exists so far.  Probably not yet useful in production.
+
+## TODO
+
+To get to a somewhat useful v1, I think I need the following done:
+
+* Middleware
+  * regular params (query string, post body)
+  * cookies
+  * multipart params (i.e. file upload)
+  * cookies
+  * sessions
 
 ## Design note
 
