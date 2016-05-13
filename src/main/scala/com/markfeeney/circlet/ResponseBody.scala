@@ -6,7 +6,7 @@ import scala.language.implicitConversions
 sealed trait ResponseBody
 object ResponseBody {
   case class StringBody(value: String) extends ResponseBody
-  case class SeqBody(value: Seq[AnyRef]) extends ResponseBody
+  case class SeqBody[T](value: Seq[T]) extends ResponseBody
   case class FileBody(value: File) extends ResponseBody
   case class StreamBody(value: InputStream) extends ResponseBody
 
