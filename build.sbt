@@ -14,3 +14,30 @@ libraryDependencies ++= Seq(
   "org.scalatest" % "scalatest_2.11" % "2.2.6" % "test",
   "com.mashape.unirest" % "unirest-java" % "1.4.9" % "test"
 )
+
+// Stuff related to publishing to sonatype
+publishMavenStyle := true
+publishTo := {
+  val nexus = "https://oss.sonatype.org/"
+  if (isSnapshot.value)
+    Some("snapshots" at nexus + "content/repositories/snapshots")
+  else
+    Some("releases"  at nexus + "service/local/staging/deploy/maven2")
+}
+publishArtifact in Test := false
+pomIncludeRepository := { _ => false }
+licenses := Seq("MIT" -> url("https://opensource.org/licenses/MIT"))
+homepage := Some(url("https://github.com/overthink/circlet"))
+pomExtra := (
+  <scm>
+    <url>git@github.com:overthink/circlet.git</url>
+    <connection>scm:git:git@github.com:overthink/circlet.git</connection>
+  </scm>
+  <developers>
+    <developer>
+      <id>overthink</id>
+      <name>Mark Feeney</name>
+      <url>http://proofbyexample.com</url>
+    </developer>
+  </developers>)
+
