@@ -1,7 +1,12 @@
 package com.markfeeney.circlet
 
 import java.io.InputStream
+import java.nio.charset.Charset
 import java.security.cert.X509Certificate
+
+import com.markfeeney.circlet.HttpParse.reValue
+
+import scala.util.Try
 
 /**
  * Basic request. Modeled after Request Map in https://github.com/ring-clojure/ring/blob/master/SPEC
@@ -45,4 +50,31 @@ case class Request(
   def updated(key: String, value: AnyRef): Request = {
     this.copy(attrs = attrs.updated(key, value))
   }
+
+  /**
+   * Add a response header to this Response.  Returns a new Response.
+   */
+  def addHeader(name: String, value: String): Request = {
+    this.copy(headers = this.headers.updated(name, value))
+  }
+
+  private val CharsetRe = (";(?:.*\\s)?(?i:charset)=(" + reValue.toString + ")\\s*(?:;|$)").r
+
+  /**
+   * Get the Charset of the request, if any.  Looks in the Content-Type header.  Requests
+   * may actually have a Content-Type header for POSTs and PUTs.
+   */
+  def characterEncoding: Option[Charset]= {
+    headers.get("content-type").flatMap { ct =>
+      Try(
+        Charset.forName(CharsetRe.findFirstMatchIn(ct).get.group(1))
+      ).toOption
+      // TODO: why doesn't the code below work????
+//      case CharsetRe(charset) =>
+//        Try(Charset.forName(charset)).toOption
+//      case _ =>
+//        None
+    }
+  }
+
 }

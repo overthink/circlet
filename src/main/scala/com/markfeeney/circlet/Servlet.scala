@@ -2,6 +2,7 @@ package com.markfeeney.circlet
 
 import java.io.{InputStream, OutputStream, FileInputStream}
 import java.security.cert.X509Certificate
+import java.util.Locale
 import collection.JavaConverters._
 
 import javax.servlet.http.{HttpServletResponse, HttpServletRequest}
@@ -14,12 +15,14 @@ object Servlet {
   /**
    * Copies headers out of servlet response and into a simple Map. Headers
    * with multiple values for the same name end up as a single comma separated
-   * string in the returned map.
+   * string in the returned map.  Header names are lowercased to make it
+   * possible to reliably look them up later.
    */
   private def headers(request: HttpServletRequest): Map[String, String] = {
     request.getHeaderNames.asScala
       .foldLeft(Map.empty[String, String]) { case (acc, headerName) =>
-        acc.updated(headerName, request.getHeaders(headerName).asScala.mkString(","))
+        val name = headerName.toLowerCase(Locale.ENGLISH)
+        acc.updated(name, request.getHeaders(headerName).asScala.mkString(","))
       }
   }
 
@@ -67,6 +70,7 @@ object Servlet {
 
   /**
    * Copy all bytes from `from` to `to`. Uses its own buffer. Doesn't close anything.
+ *
    * @param from Source of bytes
    * @param to Destination of bytes
    */

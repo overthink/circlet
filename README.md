@@ -1,8 +1,8 @@
 # Circlet
 
 Circlet is a Scala web application library heavily inspired by Clojure's
-[Ring](https://github.com/ring-clojure/ring). It's main feature is that it 
-allows (forces) you to write your applications as a function of 
+[Ring](https://github.com/ring-clojure/ring).  If we're truthful, it's a port of Ring.
+It's main feature is that it allows (forces) you to write your applications as a function of 
 type `HttpRequest => HttpResponse` rather than deal with Servlet or other more
 complicated web frameworks.
 

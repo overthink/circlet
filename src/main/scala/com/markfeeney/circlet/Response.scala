@@ -20,7 +20,7 @@ case class Response(
 
   /**
    * Helper for easily adding things to the attrs map.
- *
+   *
    * @param key Name of the thing to add
    * @param value The thing to add
    * @return A new HttpRequest with key/value added to attrs.
