@@ -1,5 +1,9 @@
 package com.markfeeney.circlet
 
+import java.net.URLDecoder
+import java.nio.charset.Charset
+import scala.util.Try
+
 /**
  * Grab-bag of functions used in multiple places.
  */
@@ -120,6 +124,44 @@ object Util {
       overrides: MimeTypes = Map.empty): Option[MimeType] = {
     filenameExt(filename).flatMap { ext =>
       overrides.get(ext).orElse(defaultMimeTypes.get(ext))
+    }
+  }
+
+  /**
+   * Decode a www-form-urlencoded string, if possible.
+   *
+   * The primary way a string cannot be
+   * decoded is if invalid percent-encoded hex digits appear, e.g. `%zz`.  Theoretically `charset`
+   * could be invalid, but that seems impossible due to us requiring `Charset` instances.
+   *
+   * @param encoded a www-form-urlencoded string
+   * @param charset the encoding of `encoded`
+   * @return The decoded string
+   */
+  def formDecodeString(encoded: String, charset: Charset): Option[String] = {
+    Try(URLDecoder.decode(encoded, charset.toString)).toOption
+  }
+
+  /**
+   * Decode a www-form-urlencoded string to a Map. Useful for decoding form bodies.
+   * @param encoded a www-form-urlencoded string, presumably with `&` separating kvs, and `=`
+   *                separating keys and values. e.g. `foo=bar&baz=quux`.
+   * @param charset The charset to use when decoding
+   * @return a map of decoded values. Portions of `encoded` that can't be decoded into a map will be discarded.
+   */
+  def formDecodeMap(encoded: String, charset: Charset): Map[String, String] = {
+    encoded.split("&").foldLeft(Map.empty[String, String]) { (acc, x) =>
+      val kv = x.split("=", 2).lift
+      val result =
+        for {
+          rawK <- kv(0)
+          rawV <- kv(1)
+          k <- formDecodeString(rawK, charset)
+          v <- formDecodeString(rawV, charset)
+        } yield {
+          acc.updated(k, v)
+        }
+      result.getOrElse(acc)
     }
   }
 
