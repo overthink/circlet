@@ -7,17 +7,17 @@ import org.scalatest.FunSuite
 class RequestTest extends FunSuite {
 
   test("charset parsing") {
-    def getCharset(contentType: String): Option[Charset] = {
+    def parse(contentType: String): Option[Charset] = {
       val req = TestUtils.request(HttpMethod.Post, "http://example.com/whatev")
         .addHeader("content-type", contentType)
       req.characterEncoding
     }
 
-    assert(getCharset("text/html; charset=utf-8").contains(UTF_8))
-    assert(getCharset("text/html; charset = utf-8").isEmpty, "No spaces around =")
-    assert(getCharset("text/html;   charset=uTF-16").contains(UTF_16))
-    assert(getCharset("").isEmpty)
-    assert(getCharset("bogus").isEmpty)
+    assert(parse("text/html; charset=utf-8").contains(UTF_8))
+    assert(parse("text/html; charset = utf-8").isEmpty, "Spaces around = not allowed")
+    assert(parse("text/html;   charset=uTF-16").contains(UTF_16))
+    assert(parse("").isEmpty)
+    assert(parse("bogus").isEmpty)
   }
 
 }

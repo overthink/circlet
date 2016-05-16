@@ -3,6 +3,7 @@ package com.markfeeney.circlet
 import java.io.InputStream
 import java.nio.charset.Charset
 import java.security.cert.X509Certificate
+import java.util.Locale
 
 import com.markfeeney.circlet.HttpParse.reValue
 
@@ -52,10 +53,14 @@ case class Request(
   }
 
   /**
-   * Add a response header to this Response.  Returns a new Response.
+   * Helper to add a header to this Request.  Returns a new Request containing a header with name/value.
+   * NB: the header name is converted to lowercase before being stored.
+   *
+   * @param name Name of the header to add, e.g. "Content-type".
+   * @param value Value of the header, e.g. "text/html"
    */
   def addHeader(name: String, value: String): Request = {
-    this.copy(headers = this.headers.updated(name, value))
+    this.copy(headers = this.headers.updated(name.toLowerCase(Locale.ENGLISH), value))
   }
 
   private val CharsetRe = (";(?:.*\\s)?(?i:charset)=(" + reValue.toString + ")\\s*(?:;|$)").r
@@ -65,16 +70,13 @@ case class Request(
    * may actually have a Content-Type header for POSTs and PUTs.
    */
   def characterEncoding: Option[Charset]= {
-    headers.get("content-type").flatMap { ct =>
-      Try(
-        Charset.forName(CharsetRe.findFirstMatchIn(ct).get.group(1))
-      ).toOption
-      // TODO: why doesn't the code below work????
-//      case CharsetRe(charset) =>
-//        Try(Charset.forName(charset)).toOption
-//      case _ =>
-//        None
-    }
+    // exercise for reader: the code below, but pattern matching CharsetRe -- seems impossible?
+    // due to ... non-capturing groups?
+    for {
+      ct <- headers.get("content-type")
+      m <- CharsetRe.findFirstMatchIn(ct) if m.groupCount >= 1
+      charset <- Try(Charset.forName(m.group(1))).toOption
+    } yield charset
   }
 
 }
