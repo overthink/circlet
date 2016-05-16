@@ -15,7 +15,7 @@ package com.markfeeney.circlet
 case class Response(
   status: Int = 200,
   headers: ResponseHeaders = Map.empty,
-  body: Option[ResponseBody],
+  body: Option[ResponseBody] = None,
   attrs: Map[String, AnyRef] = Map.empty) {
 
   /**

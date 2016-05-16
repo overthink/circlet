@@ -135,29 +135,30 @@ object Util {
    * could be invalid, but that seems impossible due to us requiring `Charset` instances.
    *
    * @param encoded a www-form-urlencoded string
-   * @param charset the encoding of `encoded`
+   * @param encoding the encoding of `encoded`
    * @return The decoded string
    */
-  def formDecodeString(encoded: String, charset: Charset): Option[String] = {
-    Try(URLDecoder.decode(encoded, charset.toString)).toOption
+  def formDecodeString(encoded: String, encoding: Charset): Option[String] = {
+    Try(URLDecoder.decode(encoded, encoding.toString)).toOption
   }
 
   /**
    * Decode a www-form-urlencoded string to a Map. Useful for decoding form bodies.
+ *
    * @param encoded a www-form-urlencoded string, presumably with `&` separating kvs, and `=`
    *                separating keys and values. e.g. `foo=bar&baz=quux`.
-   * @param charset The charset to use when decoding
+   * @param encoding The charset to use when decoding
    * @return a map of decoded values. Portions of `encoded` that can't be decoded into a map will be discarded.
    */
-  def formDecodeMap(encoded: String, charset: Charset): Map[String, String] = {
+  def formDecodeMap(encoded: String, encoding: Charset): Map[String, String] = {
     encoded.split("&").foldLeft(Map.empty[String, String]) { (acc, x) =>
       val kv = x.split("=", 2).lift
       val result =
         for {
           rawK <- kv(0)
           rawV <- kv(1)
-          k <- formDecodeString(rawK, charset)
-          v <- formDecodeString(rawV, charset)
+          k <- formDecodeString(rawK, encoding)
+          v <- formDecodeString(rawV, encoding)
         } yield {
           acc.updated(k, v)
         }

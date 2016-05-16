@@ -79,4 +79,12 @@ case class Request(
     } yield charset
   }
 
+  def contentType: Option[String] = {
+    headers.get("content-type")
+  }
+
+  def isUrlEncodedForm: Boolean = {
+    contentType.exists(_.startsWith("application/x-www-form-urlencoded"))
+  }
+
 }
