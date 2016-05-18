@@ -3,6 +3,7 @@ package com.markfeeney.circlet
 import java.net.URLDecoder
 import java.nio.charset.Charset
 import scala.util.Try
+import com.markfeeney.circlet.StrVal.{Multi, Single}
 
 /**
  * Grab-bag of functions used in multiple places.
@@ -144,14 +145,14 @@ object Util {
 
   /**
    * Decode a www-form-urlencoded string to a Map. Useful for decoding form bodies.
- *
+   *
    * @param encoded a www-form-urlencoded string, presumably with `&` separating kvs, and `=`
    *                separating keys and values. e.g. `foo=bar&baz=quux`.
    * @param encoding The charset to use when decoding
    * @return a map of decoded values. Portions of `encoded` that can't be decoded into a map will be discarded.
    */
-  def formDecodeMap(encoded: String, encoding: Charset): Map[String, String] = {
-    encoded.split("&").foldLeft(Map.empty[String, String]) { (acc, x) =>
+  def formDecodeMap(encoded: String, encoding: Charset): Map[String, StrVal] = {
+    encoded.split("&").foldLeft(Map.empty[String, StrVal]) { (acc, x) =>
       val kv = x.split("=", 2).lift
       val result =
         for {
@@ -160,7 +161,12 @@ object Util {
           k <- formDecodeString(rawK, encoding)
           v <- formDecodeString(rawV, encoding)
         } yield {
-          acc.updated(k, v)
+          val newVal = acc.get(k) match {
+            case Some(Single(s)) => Multi(Seq(s, v))
+            case Some(Multi(xs)) => Multi(xs :+ v)
+            case None => Single(v)
+          }
+          acc.updated(k, newVal)
         }
       result.getOrElse(acc)
     }

@@ -2,7 +2,7 @@ package com.markfeeney.circlet
 
 import com.markfeeney.circlet.HttpMethod.Get
 import com.markfeeney.circlet.ResponseBody.StringBody
-import com.markfeeney.circlet.ResponseHeaderValue.Single
+import com.markfeeney.circlet.StrVal.Single
 import org.scalatest.FunSuite
 import com.markfeeney.circlet.CpsConverters._
 

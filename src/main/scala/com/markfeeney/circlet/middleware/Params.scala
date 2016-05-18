@@ -4,20 +4,20 @@ import java.nio.charset.Charset
 import java.nio.charset.StandardCharsets.UTF_8
 import scala.io.Source
 import scala.util.Try
-import com.markfeeney.circlet.{Util, Middleware, Request}
+import com.markfeeney.circlet.{StrVal, Util, Middleware, Request}
 
 case class Params(
-    queryParams: Map[String, String] = Map.empty,
-    formParams: Map[String, String] = Map.empty) {
+    queryParams: Map[String, StrVal] = Map.empty,
+    formParams: Map[String, StrVal] = Map.empty) {
   /**
    * Merged set of params. Form params get precedence over query string params.
    */
-  lazy val all: Map[String, String] = queryParams ++ formParams
+  lazy val all: Map[String, StrVal] = queryParams ++ formParams
 }
 
 object Params {
 
-  private def formParams(req: Request, encoding: Charset): Map[String, String] = {
+  private def formParams(req: Request, encoding: Charset): Map[String, StrVal] = {
     req.body match {
       case Some(is) if req.isUrlEncodedForm =>
         val body: String = Source.fromInputStream(is, encoding.toString).mkString
@@ -26,7 +26,7 @@ object Params {
     }
   }
 
-  private def queryParams(req: Request, encoding: Charset): Map[String, String] = {
+  private def queryParams(req: Request, encoding: Charset): Map[String, StrVal] = {
     req.queryString match {
       case Some(qs) =>
         // Note to self when I inevitibly second guess this in the future:

@@ -51,7 +51,7 @@ object Servlet {
   }
 
   private def setHeaders(servletResponse: HttpServletResponse, headers: ResponseHeaders): Unit = {
-    import ResponseHeaderValue._
+    import StrVal._
     headers.foreach { case (k, v) =>
         v match {
           case Single(value) =>
@@ -70,7 +70,7 @@ object Servlet {
 
   /**
    * Copy all bytes from `from` to `to`. Uses its own buffer. Doesn't close anything.
- *
+   *
    * @param from Source of bytes
    * @param to Destination of bytes
    */

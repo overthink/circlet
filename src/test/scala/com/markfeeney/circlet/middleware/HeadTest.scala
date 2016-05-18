@@ -1,7 +1,7 @@
 package com.markfeeney.circlet.middleware
 
 import com.markfeeney.circlet.ResponseBody.StringBody
-import com.markfeeney.circlet.ResponseHeaderValue.Single
+import com.markfeeney.circlet.StrVal.Single
 import com.markfeeney.circlet.TestUtils.{hwApp, request}
 import com.markfeeney.circlet.{Handler, HttpMethod}
 import org.scalatest.FunSuite

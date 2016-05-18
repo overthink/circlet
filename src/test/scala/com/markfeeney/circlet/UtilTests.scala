@@ -2,6 +2,7 @@ package com.markfeeney.circlet
 
 import java.nio.charset.StandardCharsets.{UTF_8, UTF_16}
 
+import com.markfeeney.circlet.StrVal.Single
 import org.scalatest.FunSuite
 
 class UtilTests extends FunSuite {
@@ -17,15 +18,15 @@ class UtilTests extends FunSuite {
   }
 
   test("form decode to a map") {
-    def decode(s: String): Map[String, String] = Util.formDecodeMap(s, UTF_8)
+    def decode(s: String): Map[String, StrVal] = Util.formDecodeMap(s, UTF_8)
     assert(decode("") == Map.empty)
     assert(decode("a") == Map.empty)
-    assert(decode("a=b") == Map("a" -> "b"))
-    assert(decode("a=b&c=d%2fe") == Map("a" -> "b", "c" -> "d/e"))
-    assert(decode("a=b&c=%zz") == Map("a" -> "b"))
-    assert(decode("a=b&c") == Map("a" -> "b"))
-    assert(decode("a=b&") == Map("a" -> "b"))
-    assert(Util.formDecodeMap("a=foo%FE%FF%00%2Fbar", UTF_16) == Map("a" -> "foo/bar"))
+    assert(decode("a=b") == Map("a" -> Single("b")))
+    assert(decode("a=b&c=d%2fe") == Map("a" -> Single("b"), "c" -> Single("d/e")))
+    assert(decode("a=b&c=%zz") == Map("a" -> Single("b")))
+    assert(decode("a=b&c") == Map("a" -> Single("b")))
+    assert(decode("a=b&") == Map("a" -> Single("b")))
+    assert(Util.formDecodeMap("a=foo%FE%FF%00%2Fbar", UTF_16) == Map("a" -> Single("foo/bar")))
   }
 
 }

@@ -1,15 +1,15 @@
 package com.markfeeney.circlet.middleware
 
-import com.markfeeney.circlet.ResponseHeaderValue.Single
+import com.markfeeney.circlet.StrVal.Single
 import com.markfeeney.circlet.TestUtils.{hwApp, request}
-import com.markfeeney.circlet.{ResponseHeaderValue, Handler, HttpMethod}
+import com.markfeeney.circlet.{StrVal, Handler, HttpMethod}
 import org.scalatest.FunSuite
 
 class ContentTypeTest extends FunSuite {
 
   private val wrapped: Handler = ContentType.wrap()(hwApp)
 
-  private def contentType(path: String): Option[ResponseHeaderValue] = {
+  private def contentType(path: String): Option[StrVal] = {
     wrapped(request(HttpMethod.Get, path)).headers.get("Content-Type")
   }
 

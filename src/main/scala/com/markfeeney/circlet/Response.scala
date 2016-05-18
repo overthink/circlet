@@ -32,7 +32,7 @@ case class Response(
   /**
    * Add a response header to this Response.  Returns a new Response.
    */
-  def addHeader(name: String, value: ResponseHeaderValue): Response = {
+  def addHeader(name: String, value: StrVal): Response = {
     this.copy(headers = this.headers.updated(name, value))
   }
 }
