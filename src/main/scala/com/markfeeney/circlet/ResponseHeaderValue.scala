@@ -11,11 +11,11 @@ sealed trait ResponseHeaderValue {
 }
 object ResponseHeaderValue {
 
-  case class Single(value: String) extends ResponseHeaderValue {
+  final case class Single(value: String) extends ResponseHeaderValue {
     def asString: String = value
   }
 
-  case class Multi(values: Seq[String]) extends ResponseHeaderValue {
+  final case class Multi(values: Seq[String]) extends ResponseHeaderValue {
     def asString: String = values.mkString(",")
   }
 

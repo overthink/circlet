@@ -66,8 +66,8 @@ object JettyOptions {
   sealed trait SslStoreConfig
 
   object SslStoreConfig {
-    case class Path(path: String) extends SslStoreConfig
-    case class Instance(keystore: KeyStore) extends SslStoreConfig
+    final case class Path(path: String) extends SslStoreConfig
+    final case class Instance(keystore: KeyStore) extends SslStoreConfig
     implicit def stringToPath(path: String): Option[SslStoreConfig] = {
       Some(Path(path))
     }
