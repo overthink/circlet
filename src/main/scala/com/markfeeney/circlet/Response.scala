@@ -14,7 +14,7 @@ package com.markfeeney.circlet
  */
 case class Response(
   status: Int = 200,
-  headers: Map[String, Seq[String]] = Map.empty,
+  headers: Map[String, Vector[String]] = Map.empty,
   body: Option[ResponseBody] = None,
   attrs: Map[String, AnyRef] = Map.empty) {
 
@@ -32,7 +32,11 @@ case class Response(
   /**
    * Add a response header to this Response.  Returns a new Response.
    */
-  def addHeader(name: String, value: Seq[String]): Response = {
+  def addHeader(name: String, value: Vector[String]): Response = {
     this.copy(headers = this.headers.updated(name, value))
+  }
+
+  def addHeader(name: String, value: String): Response = {
+    addHeader(name, Vector(value))
   }
 }

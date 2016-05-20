@@ -7,17 +7,17 @@ import scala.util.Try
 import com.markfeeney.circlet.{Util, Middleware, Request}
 
 case class Params(
-    queryParams: Map[String, Seq[String]] = Map.empty,
-    formParams: Map[String, Seq[String]] = Map.empty) {
+    queryParams: Map[String, Vector[String]] = Map.empty,
+    formParams: Map[String, Vector[String]] = Map.empty) {
   /**
    * Merged set of params. Query params override form params.
    */
-  lazy val all: Map[String, Seq[String]] = formParams ++ queryParams
+  lazy val all: Map[String, Vector[String]] = formParams ++ queryParams
 }
 
 object Params {
 
-  private def formParams(req: Request, encoding: Charset): Map[String, Seq[String]] = {
+  private def formParams(req: Request, encoding: Charset): Map[String, Vector[String]] = {
     req.body match {
       case Some(is) if req.isUrlEncodedForm =>
         val body: String = Source.fromInputStream(is, encoding.toString).mkString
@@ -26,7 +26,7 @@ object Params {
     }
   }
 
-  private def queryParams(req: Request, encoding: Charset): Map[String, Seq[String]] = {
+  private def queryParams(req: Request, encoding: Charset): Map[String, Vector[String]] = {
     req.queryString match {
       case Some(qs) =>
         // Note to self when I inevitibly second guess this in the future:

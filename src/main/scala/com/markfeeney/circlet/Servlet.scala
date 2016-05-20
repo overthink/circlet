@@ -50,12 +50,12 @@ object Servlet {
     )
   }
 
-  private def setHeaders(servletResponse: HttpServletResponse, headers: Map[String, Seq[String]]): Unit = {
+  private def setHeaders(servletResponse: HttpServletResponse, headers: Map[String, Vector[String]]): Unit = {
     headers.foreach { case (k, v) =>
         v match {
-          case List(value) =>
+          case Vector(value) =>
             servletResponse.setHeader(k, value)
-          case values: Seq[String] =>
+          case values: Vector[String] =>
             values.foreach { value =>
               servletResponse.addHeader(k, value)
             }

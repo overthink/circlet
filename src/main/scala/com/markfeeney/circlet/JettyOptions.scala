@@ -57,8 +57,8 @@ case class JettyOptions(
   trustStore: Option[SslStoreConfig] = None,
   trustStorePassword: Option[String] = None,
   clientAuth: Option[ClientAuth] = None,
-  excludeCiphers: Seq[String] = Nil,
-  excludeProtocols: Seq[String] = Nil
+  excludeCiphers: Vector[String] = Vector.empty,
+  excludeProtocols: Vector[String] = Vector.empty
 )
 
 object JettyOptions {

@@ -13,7 +13,7 @@ class HeadTest extends FunSuite {
     val getResp = hwApp(request(HttpMethod.Get, "/"))
     withClue("get expected response with GET") {
       assert(getResp.status == 200)
-      assert(getResp.headers.get("X-Foo").contains(Seq("42")))
+      assert(getResp.headers.get("X-Foo").contains(Vector("42")))
       assert(getResp.body.contains(StringBody("Hello world")))
     }
 

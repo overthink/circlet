@@ -152,8 +152,8 @@ object Util {
    * @param encoding The charset to use when decoding
    * @return a map of decoded values. Portions of `encoded` that can't be decoded into a map will be discarded.
    */
-  def formDecodeMap(encoded: String, encoding: Charset): Map[String, Seq[String]] = {
-    encoded.split("&").foldLeft(Map.empty[String, Seq[String]]) { (acc, x) =>
+  def formDecodeMap(encoded: String, encoding: Charset): Map[String, Vector[String]] = {
+    encoded.split("&").foldLeft(Map.empty[String, Vector[String]]) { (acc, x) =>
       val kv = x.split("=", 2).lift
       val result =
         for {
@@ -164,7 +164,7 @@ object Util {
         } yield {
           val newVal = acc.get(k) match {
             case Some(xs) => xs :+ v
-            case None => Seq(v)
+            case None => Vector(v)
           }
           acc.updated(k, newVal)
         }

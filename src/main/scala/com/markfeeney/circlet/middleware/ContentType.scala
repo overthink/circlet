@@ -18,7 +18,7 @@ object ContentType {
       resp
     } else {
       val mimeType = Util.mimeType(req.uri, overrides).getOrElse("application/octet-stream")
-      resp.addHeader("Content-Type", Seq(mimeType))
+      resp.addHeader("Content-Type", mimeType)
     }
   }
 

@@ -32,7 +32,7 @@ object TestUtils {
     req.requestMethod match {
       case HttpMethod.Get =>
         // Add a header so we can be sure this code executed even if body is remmoved
-        Response(body = "Hello world", headers = Map("X-Foo" -> Seq("42")))
+        Response(body = "Hello world", headers = Map("X-Foo" -> Vector("42")))
       case _ =>
         Response(status = 404, body = "not found")
     }
