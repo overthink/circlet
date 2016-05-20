@@ -2,7 +2,6 @@ package com.markfeeney.circlet
 
 import com.markfeeney.circlet.HttpMethod.Get
 import com.markfeeney.circlet.ResponseBody.StringBody
-import com.markfeeney.circlet.StrVal.Single
 import org.scalatest.FunSuite
 import com.markfeeney.circlet.CpsConverters._
 
@@ -12,10 +11,10 @@ class CpsConvertersTest extends FunSuite {
 
     def runAsserts(resp: Response): Unit = {
       assert(resp.body.contains(StringBody("Foo!")))
-      assert(resp.headers == Map("X-Foo" -> Single("42")))
+      assert(resp.headers == Map("X-Foo" -> Seq("42")))
     }
 
-    val h: Handler = req => Response(body = "Foo!", headers = Map("X-Foo" -> "42"))
+    val h: Handler = req => Response(body = "Foo!", headers = Map("X-Foo" -> Seq("42")))
     val req = TestUtils.request(HttpMethod.Get, "/")
     runAsserts(h(req))
 
@@ -33,7 +32,7 @@ class CpsConvertersTest extends FunSuite {
     val mw: Middleware = handler => req => {
       val req0 = req.copy(headers = req.headers.updated("new-req-header", "true"))
       val resp = handler(req0)
-      resp.copy(headers = resp.headers.updated("new-resp-header", "true"))
+      resp.copy(headers = resp.headers.updated("new-resp-header", Seq("true")))
     }
 
     val h: Handler = req => {
@@ -47,7 +46,7 @@ class CpsConvertersTest extends FunSuite {
       val savedReq = resp.attrs("request").asInstanceOf[Request]
       assert(resp.body.contains(StringBody("Hello world")))
       assert(savedReq.headers.get("new-req-header").contains("true"))
-      assert(resp.headers.get("new-resp-header").contains(Single("true")))
+      assert(resp.headers.get("new-resp-header").contains(Seq("true")))
     }
 
     withClue("same tests with CPS middleware") {
@@ -56,7 +55,7 @@ class CpsConvertersTest extends FunSuite {
         val savedReq = resp.attrs("request").asInstanceOf[Request]
         assert(resp.body.contains(StringBody("Hello world")))
         assert(savedReq.headers.get("new-req-header").contains("true"))
-        assert(resp.headers.get("new-resp-header").contains(Single("true")))
+        assert(resp.headers.get("new-resp-header").contains(Seq("true")))
         Done
       })
     }

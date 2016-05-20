@@ -1,7 +1,6 @@
 package com.markfeeney.circlet.middleware
 
 import com.markfeeney.circlet.ResponseBody.StringBody
-import com.markfeeney.circlet.StrVal.Single
 import com.markfeeney.circlet.TestUtils.{hwApp, request}
 import com.markfeeney.circlet.{Handler, HttpMethod}
 import org.scalatest.FunSuite
@@ -14,7 +13,7 @@ class HeadTest extends FunSuite {
     val getResp = hwApp(request(HttpMethod.Get, "/"))
     withClue("get expected response with GET") {
       assert(getResp.status == 200)
-      assert(getResp.headers.get("X-Foo").contains(Single("42")))
+      assert(getResp.headers.get("X-Foo").contains(Seq("42")))
       assert(getResp.body.contains(StringBody("Hello world")))
     }
 

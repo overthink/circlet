@@ -5,7 +5,6 @@ import java.net.URLDecoder
 import java.nio.charset.Charset
 import java.nio.charset.StandardCharsets.UTF_8
 import scala.util.Try
-import com.markfeeney.circlet.StrVal.{Multi, Single}
 
 /**
  * Grab-bag of functions used in multiple places.
@@ -153,8 +152,8 @@ object Util {
    * @param encoding The charset to use when decoding
    * @return a map of decoded values. Portions of `encoded` that can't be decoded into a map will be discarded.
    */
-  def formDecodeMap(encoded: String, encoding: Charset): Map[String, StrVal] = {
-    encoded.split("&").foldLeft(Map.empty[String, StrVal]) { (acc, x) =>
+  def formDecodeMap(encoded: String, encoding: Charset): Map[String, Seq[String]] = {
+    encoded.split("&").foldLeft(Map.empty[String, Seq[String]]) { (acc, x) =>
       val kv = x.split("=", 2).lift
       val result =
         for {
@@ -164,9 +163,8 @@ object Util {
           v <- formDecodeString(rawV, encoding)
         } yield {
           val newVal = acc.get(k) match {
-            case Some(Single(s)) => Multi(Seq(s, v))
-            case Some(Multi(xs)) => Multi(xs :+ v)
-            case None => Single(v)
+            case Some(xs) => xs :+ v
+            case None => Seq(v)
           }
           acc.updated(k, newVal)
         }

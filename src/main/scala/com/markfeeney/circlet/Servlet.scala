@@ -50,21 +50,20 @@ object Servlet {
     )
   }
 
-  private def setHeaders(servletResponse: HttpServletResponse, headers: ResponseHeaders): Unit = {
-    import StrVal._
+  private def setHeaders(servletResponse: HttpServletResponse, headers: Map[String, Seq[String]]): Unit = {
     headers.foreach { case (k, v) =>
         v match {
-          case Single(value) =>
+          case List(value) =>
             servletResponse.setHeader(k, value)
-          case Multi(values) =>
+          case values: Seq[String] =>
             values.foreach { value =>
               servletResponse.addHeader(k, value)
             }
         }
     }
     // Some headers must be set through specific methods
-    headers.get("Content-Type").foreach { value =>
-      servletResponse.setContentType(value.asString)
+    headers.get("Content-Type").flatMap(_.headOption).foreach { value =>
+      servletResponse.setContentType(value)
     }
   }
 
