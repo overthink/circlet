@@ -10,9 +10,9 @@ case class Params(
     queryParams: Map[String, StrVal] = Map.empty,
     formParams: Map[String, StrVal] = Map.empty) {
   /**
-   * Merged set of params. Form params get precedence over query string params.
+   * Merged set of params. Query params override form params.
    */
-  lazy val all: Map[String, StrVal] = queryParams ++ formParams
+  lazy val all: Map[String, StrVal] = formParams ++ queryParams
 }
 
 object Params {

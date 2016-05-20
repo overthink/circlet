@@ -1,7 +1,9 @@
 package com.markfeeney.circlet
 
+import java.io.{ByteArrayInputStream, InputStream}
 import java.net.URLDecoder
 import java.nio.charset.Charset
+import java.nio.charset.StandardCharsets.UTF_8
 import scala.util.Try
 import com.markfeeney.circlet.StrVal.{Multi, Single}
 
@@ -170,6 +172,16 @@ object Util {
         }
       result.getOrElse(acc)
     }
+  }
+
+  /**
+   * Get an input stream for the string `s` in the given encoing.
+   * @param s The string that should be made into an InputStream
+   * @param encoding The encoding to use when converting the string to bytes.
+   * @return An input stream returning the bytes of `s`.
+   */
+  def stringInputStream(s: String, encoding: Charset = UTF_8): InputStream = {
+    new ByteArrayInputStream(s.getBytes(encoding))
   }
 
 }
