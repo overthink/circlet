@@ -27,7 +27,7 @@ Minimal middleware exists so far.  Probably not yet useful in production.
 To get to a somewhat useful v1, I think I need the following done:
 
 * Middleware
-  * regular params (query string, post body)
+  * ~~regular params (query string, post body)~~
   * cookies
   * multipart params (i.e. file upload)
   * cookies
