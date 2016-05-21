@@ -26,9 +26,13 @@ case class Params(
 
 object Params {
 
+  private def isUrlEncodedForm(req: Request): Boolean = {
+    req.contentType.exists(_.startsWith("application/x-www-form-urlencoded"))
+  }
+
   private def formParams(req: Request, encoding: Charset): Map[String, StrParam] = {
     req.body match {
-      case Some(is) if req.isUrlEncodedForm =>
+      case Some(is) if isUrlEncodedForm(req) =>
         val body: String = Source.fromInputStream(is, encoding.toString).mkString
         Util.formDecodeMap(body, encoding).map { case (k, v) => k -> StrParam(v) }
       case _ => Map.empty
@@ -54,29 +58,37 @@ object Params {
 
   private def addParams(req: Request, encoding: Option[Charset]): Request = {
     val cs: Charset = encoding.orElse(req.characterEncoding).getOrElse(UTF_8)
-    // Ring ensures params are only parsed once, but I don't.  When will I learn why they do this?
-    val params = Params(queryParams(req, cs), formParams(req, cs))
-    req.updated("params", params)
+    // MultipartParams may have parsed some Params already; don't trample
+    val params: Params = get(req).copy(
+      queryParams = queryParams(req, cs),
+      formParams = formParams(req, cs)
+    )
+    set(req, params)
   }
 
   /**
-   * An empty set of Params.
-   */
-  val empty: Params = Params()
-
-  /**
-   * Type-safe ... access to parsed Params for `req`.
+   * "Type-safe" access to parsed Params for `req`.
    *
    * @param req The request to look for Params on.
    * @return The parsed Params, if any, otherwise an empty Params instance.
    */
   def get(req: Request): Params = {
-    Try(req.attrs("params").asInstanceOf[Params]).getOrElse(empty)
+    Try(req.attrs("params").asInstanceOf[Params]).getOrElse(Params())
   }
 
   /**
-   * Add parsed params from the query string and request body to the request's `attrs`
-   * map under the key "params".  Returns new Request.
+   * Update the params instance on req. Returns a new request.
+   * @param req The request to update
+   * @param params The params to add to `req`
+   * @return A new request with updated Params retreiveable via `Params.get()`
+   */
+  def set(req: Request, params: Params): Request = {
+    req.updated("params", params)
+  }
+
+  /**
+   * Add parsed params from the query string and request body to the request.
+   * Use `Params.get(req)` to get access to them. Returns new Request.
    *
    * @param encoding The encoding to use for URL decoding. If not specified,
    *                 uses the request character encoding, or UTF-8 if no request

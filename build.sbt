@@ -11,6 +11,7 @@ scalacOptions ++= Seq(
 )
 libraryDependencies ++= Seq(
   "org.eclipse.jetty" % "jetty-server" % "9.2.16.v20160414", // 9.3 needs Java 8, so stick with 9.2 for now
+  "commons-fileupload" % "commons-fileupload" % "1.3.1",
   "org.scalatest" % "scalatest_2.11" % "2.2.6" % "test",
   "com.mashape.unirest" % "unirest-java" % "1.4.9" % "test"
 )

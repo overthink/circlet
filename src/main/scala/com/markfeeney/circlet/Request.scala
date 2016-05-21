@@ -83,8 +83,8 @@ case class Request(
     headers.get("content-type")
   }
 
-  def isUrlEncodedForm: Boolean = {
-    contentType.exists(_.startsWith("application/x-www-form-urlencoded"))
+  def contentLength: Option[Long] = {
+    headers.get("content-length").flatMap(cl => Try(cl.toLong).toOption)
   }
 
 }
