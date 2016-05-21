@@ -2,9 +2,14 @@
 
 Circlet is a Scala web application library heavily inspired by Clojure's
 [Ring](https://github.com/ring-clojure/ring).  If we're truthful, it's a port of Ring.
-It's main feature is that it allows (forces) you to write your applications as a function of 
-type `HttpRequest => HttpResponse` rather than deal with Servlet or other more
-complicated web frameworks.
+Its main feature is that it allows (forces) you to write your application as a function of 
+type `Request => Response`.  It also hides the details of the underlying web server 
+(which is always Jetty at the moment).
+
+As with Ring, middleware (functions of type `(Request => Response) => (Request => Response)`) 
+is used for adding reusable bits of functionality to applications.  Circlet includes a bunch of
+useful middleware like parameter parsing, file upload handling, cookies, sessions, 
+and serving static resources.
 
 Circlet is named after Ring in a very clever and original way.
 
@@ -77,10 +82,3 @@ which I should probably study more.
 
 CPS significantly complicates writing (and more importantly, reading) handlers and middleware (IMO),
 so I'm not sure if I'll keep this.  It's nice to have the option, but how commonly is it actually needed? TBD.
-
-## Other half-baked thoughts
-
-* Writing of Circlet response bodies to servlet response could be a typeclass for extensibility
-* Could just wrap HttpServletRequest, HttpServletResponse with a more Scala-like API rather 
-  than copy data into Circlet's HttpRequest and HttpResponse classes...  ServletRequest even has
-  getAttribute/setAttribute (meh)
