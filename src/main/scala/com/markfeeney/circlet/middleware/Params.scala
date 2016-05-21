@@ -6,27 +6,36 @@ import scala.io.Source
 import scala.util.Try
 import com.markfeeney.circlet.{Util, Middleware, Request}
 
+/**
+ * Parameters parsed from different parts of a Request.
+ *
+ * @param queryParams Params from the query string
+ * @param formParams Params from a form post (application/x-www-form-urlencoded)
+ * @param multipartParams Params from a multipart form post (multipart/form-data)
+ */
 case class Params(
-    queryParams: Map[String, Vector[String]] = Map.empty,
-    formParams: Map[String, Vector[String]] = Map.empty) {
+    queryParams: Map[String, StrParam] = Map.empty,
+    formParams: Map[String, StrParam] = Map.empty,
+    multipartParams: Map[String, Param] = Map.empty) {
+
   /**
-   * Merged set of params. Query params override form params.
+   * Merged view of all param types.
    */
-  lazy val all: Map[String, Vector[String]] = formParams ++ queryParams
+  val all: Map[String, Param] = formParams ++ multipartParams ++ queryParams
 }
 
 object Params {
 
-  private def formParams(req: Request, encoding: Charset): Map[String, Vector[String]] = {
+  private def formParams(req: Request, encoding: Charset): Map[String, StrParam] = {
     req.body match {
       case Some(is) if req.isUrlEncodedForm =>
         val body: String = Source.fromInputStream(is, encoding.toString).mkString
-        Util.formDecodeMap(body, encoding)
+        Util.formDecodeMap(body, encoding).map { case (k, v) => k -> StrParam(v) }
       case _ => Map.empty
     }
   }
 
-  private def queryParams(req: Request, encoding: Charset): Map[String, Vector[String]] = {
+  private def queryParams(req: Request, encoding: Charset): Map[String, StrParam] = {
     req.queryString match {
       case Some(qs) =>
         // Note to self when I inevitibly second guess this in the future:
@@ -38,7 +47,7 @@ object Params {
         // the query string (https://tools.ietf.org/html/rfc3986#section-5.4.2), but it doesn't look
         // like even JS's encodeURIComponent honours that (but it does for the fragment !?)
         /// tl;dr - treat query string like form body, hope for best
-        Util.formDecodeMap(qs, encoding)
+        Util.formDecodeMap(qs, encoding).map { case (k, v) => k -> StrParam(v) }
       case _ => Map.empty
     }
   }

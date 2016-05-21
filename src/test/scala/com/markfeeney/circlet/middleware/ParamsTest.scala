@@ -23,17 +23,17 @@ class ParamsTest extends FunSuite {
 
   test("simple query string") {
     val ps = params("/test?foo=bar")
-    assert(ps.all == Map("foo" -> Vector("bar")))
+    assert(ps.all == Map[String, Param]("foo" -> "bar"))
     assert(ps.queryParams == ps.all)
     assert(ps.formParams == Map.empty)
   }
 
   test("Seq and multi valued query string") {
     val ps = params("/test?x=hi+there&a=1&a=2&foo=bar&a=3")
-    val expected = Map(
+    val expected = Map[String, Param](
       "a" -> Vector("1", "2", "3"),
-      "foo" -> Vector("bar"),
-      "x" -> Vector("hi there")
+      "foo" -> "bar",
+      "x" -> "hi there"
     )
     assert(ps.queryParams == expected)
     assert(ps.queryParams == ps.all)
@@ -48,8 +48,8 @@ class ParamsTest extends FunSuite {
 
   test("form params") {
     val ps = params(formPost("/whatev", "foo=bar&a=1&a=2+3"))
-    val expected = Map(
-      "foo" -> Vector("bar"),
+    val expected = Map[String, Param](
+      "foo" -> "bar",
       "a" -> Vector("1", "2 3")
     )
     assert(ps.formParams == expected)
@@ -59,11 +59,11 @@ class ParamsTest extends FunSuite {
 
   test("both form and query params") {
     val ps = params(formPost("/whatev?x=y&a=99", "foo=bar&a=1&a=2+3"))
-    val expectedForm = Map(
-      "foo" -> Vector("bar"),
+    val expectedForm = Map[String, Param](
+      "foo" -> "bar",
       "a" -> Vector("1", "2 3")
     )
-    val expectedQuery = Map("x" -> Vector("y"), "a" -> Vector("99"))
+    val expectedQuery = Map[String, Param]("x" -> "y", "a" -> "99")
     assert(ps.formParams == expectedForm)
     assert(ps.queryParams == expectedQuery)
     assert(ps.all == expectedForm ++ expectedQuery, "query string params override form params")
