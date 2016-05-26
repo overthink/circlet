@@ -3,8 +3,10 @@ package com.markfeeney.circlet.middleware
 import java.io.InputStream
 import java.nio.charset.Charset
 import java.nio.charset.StandardCharsets._
-import scala.annotation.tailrec
-import com.markfeeney.circlet.{Middleware, Request}
+import java.io.File
+import java.nio.file.Files
+import com.markfeeney.circlet.{Response, Done, CpsMiddleware, Cleanly, Middleware, Request}
+import org.apache.commons.fileupload.util.Streams
 import org.apache.commons.fileupload.{FileItemIterator, FileItemStream, FileUpload, UploadContext}
 
 object MultipartParams {
@@ -31,7 +33,34 @@ object MultipartParams {
     }
   }
 
-  def parseFileItem(item: FileItemStream, encoding: Charset): (String, Param) = ???
+  /** Save the contents of `item` to a new temp file and return the temp file. */
+  private def saveFile(item: FileItemStream): File = {
+    val result: Either[Exception, File] =
+      Cleanly(item.openStream())(_.close()) { stream =>
+        val temp = File.createTempFile("circlet-multipart-", null)
+        Files.copy(stream, temp.toPath)
+        temp
+      }
+    result.right.get // TODO: fn should return Option[File]
+  }
+
+  /**
+   * Parse `item` into a key value pair.
+   */
+  private def parseFileItem(item: FileItemStream, encoding: Charset): (String, Param) = {
+    val name = item.getFieldName
+    val value: Param =
+      if (item.isFormField) {
+        val str = Cleanly(item.openStream())(_.close()) { stream =>
+          Streams.asString(stream, encoding.toString)
+        }
+        str.right.get  // TODO: fn should return Option[(String, Param)]
+      } else {
+        val tempFile = saveFile(item)
+        FileParam(item.getName, item.getContentType, tempFile, tempFile.length())
+      }
+    name -> value
+  }
 
   private def parseMultipart(req: Request, encoding: Charset): Map[String, Param] = {
     if (isMultipartForm(req)) {
@@ -57,6 +86,10 @@ object MultipartParams {
     // Regular Params middleware may have parsed some params already; don't trample
     val params = Params.get(req).copy(multipartParams = parseMultipart(req, enc))
     Params.set(req, params)
+  }
+
+  def wrapCps: CpsMiddleware = handler => (req, k) => {
+    ???
   }
 
   /**

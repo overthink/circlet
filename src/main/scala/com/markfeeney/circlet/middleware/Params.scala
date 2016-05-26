@@ -19,9 +19,10 @@ case class Params(
     multipartParams: Map[String, Param] = Map.empty) {
 
   /**
-   * Merged view of all param types.
+   * Merged view of all param types. Multipart params override query params which
+   * override regular form params.
    */
-  val all: Map[String, Param] = formParams ++ multipartParams ++ queryParams
+  val all: Map[String, Param] = formParams ++ queryParams ++ multipartParams
 }
 
 object Params {

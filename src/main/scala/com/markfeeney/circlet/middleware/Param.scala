@@ -23,7 +23,7 @@ final case class FileParam(
   filename: String,
   contentType: String,
   tempFile: File,
-  size: Int) extends Param
+  size: Long) extends Param
 
 object Param {
   implicit def str2StrParam(s: String): StrParam = StrParam(Vector(s))

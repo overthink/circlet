@@ -57,7 +57,7 @@ class ParamsTest extends FunSuite {
     assert(ps.queryParams == Map.empty)
   }
 
-  test("both form and query params") {
+  test("query string params override form params") {
     val ps = params(formPost("/whatev?x=y&a=99", "foo=bar&a=1&a=2+3"))
     val expectedForm = Map[String, Param](
       "foo" -> "bar",
@@ -66,7 +66,17 @@ class ParamsTest extends FunSuite {
     val expectedQuery = Map[String, Param]("x" -> "y", "a" -> "99")
     assert(ps.formParams == expectedForm)
     assert(ps.queryParams == expectedQuery)
-    assert(ps.all == expectedForm ++ expectedQuery, "query string params override form params")
+    assert(ps.all == expectedForm ++ expectedQuery)
+  }
+
+  test("param values parsed from same area merge; from different area overwrite") {
+    val ps = params(formPost("/whatev?x=1&x=2&y=1", "x=5&x=6&z=42"))
+    val expectedAll = Map[String, Param](
+      "x" -> Vector("1", "2"),
+      "y" -> "1",
+      "z" -> "42"
+    )
+    assert(ps.all == expectedAll)
   }
 
 }
