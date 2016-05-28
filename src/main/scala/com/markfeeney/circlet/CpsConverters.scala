@@ -11,8 +11,7 @@ object CpsConverters {
     (request, k) => k(h(request))
   }
 
-  // TBD if this should be publicly available
-  private def cps2Handler(cpsH: CpsHandler): Handler = {
+  implicit def cps2Handler(cpsH: CpsHandler): Handler = {
     var resp: Response = null // yes really, much evil here
     request => {
       cpsH(request, response => {
@@ -23,8 +22,12 @@ object CpsConverters {
     }
   }
 
+  implicit def cps2Middleware(cpsMw: CpsMiddleware): Middleware = {
+    handler => cps2Handler(cpsMw(handler2Cps(handler)))
+  }
+
   implicit def middleware2Cps(mw: Middleware): CpsMiddleware = {
-    cpsH => mw(cps2Handler(cpsH))
+    cpsH => handler2Cps(mw(cps2Handler(cpsH)))
   }
 
 }

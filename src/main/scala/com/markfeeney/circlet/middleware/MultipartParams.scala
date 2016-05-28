@@ -1,18 +1,18 @@
 package com.markfeeney.circlet.middleware
 
-import java.io.InputStream
+import java.io.{File, InputStream}
 import java.nio.charset.Charset
 import java.nio.charset.StandardCharsets._
-import java.io.File
-import java.nio.file.Files
-import com.markfeeney.circlet.{Response, Done, CpsMiddleware, Cleanly, Middleware, Request}
+import java.nio.file.{StandardCopyOption, CopyOption, Files}
+import com.markfeeney.circlet.{Middleware, Cleanly, CpsMiddleware, Request}
+import com.markfeeney.circlet.CpsConverters._
 import org.apache.commons.fileupload.util.Streams
 import org.apache.commons.fileupload.{FileItemIterator, FileItemStream, FileUpload, UploadContext}
 
 object MultipartParams {
 
   private def isMultipartForm(req: Request): Boolean = {
-    req.contentType.contains("multipart/form-data")
+    req.contentType.exists(_.startsWith("multipart/form-data"))
   }
 
   private def uploadContext(req: Request, encoding: Charset): UploadContext = {
@@ -35,13 +35,22 @@ object MultipartParams {
 
   /** Save the contents of `item` to a new temp file and return the temp file. */
   private def saveFile(item: FileItemStream): File = {
-    val result: Either[Exception, File] =
-      Cleanly(item.openStream())(_.close()) { stream =>
-        val temp = File.createTempFile("circlet-multipart-", null)
-        Files.copy(stream, temp.toPath)
-        temp
-      }
-    result.right.get // TODO: fn should return Option[File]
+    val temp = File.createTempFile("circlet-multipart-", null)
+    val stream = item.openStream()
+    try {
+      Files.copy(stream, temp.toPath) // , StandardCopyOption.REPLACE_EXISTING)
+      temp
+    } catch {
+      case e: Exception =>
+        // TODO: this is not quite enough... consider case where some file uploads
+        // parse but others throw -- the parsed ones will be stranded on disk since
+        // the higher-level cleanup only works if addMultipart() returns successfully
+        temp.delete()
+        throw e
+    }
+    finally {
+      stream.close()
+    }
   }
 
   /**
@@ -54,7 +63,8 @@ object MultipartParams {
         val str = Cleanly(item.openStream())(_.close()) { stream =>
           Streams.asString(stream, encoding.toString)
         }
-        str.right.get  // TODO: fn should return Option[(String, Param)]
+        // better to use Either or Option? Not convinced
+        str.right.get
       } else {
         val tempFile = saveFile(item)
         FileParam(item.getName, item.getContentType, tempFile, tempFile.length())
@@ -88,20 +98,34 @@ object MultipartParams {
     Params.set(req, params)
   }
 
-  def wrapCps: CpsMiddleware = handler => (req, k) => {
-    ???
-  }
-
   /**
    * Add parsed params from multipart form posts to the request. Use `Params.get(req)` to
-   * get access to them. Returns new Request.
+   * get access to them. Returns new Request.  File uploads are stored as temp files
+   * (see `FileParam`) for the duration of the request, then deleted.
    *
    * @param encoding The encoding used for multipart parsting. If not specified,
    *                 uses the request character encoding, or UTF-8 if no request
    *                 encoding can be found.
    */
-  def wrap(encoding: Option[Charset] = None): Middleware = handler => req => {
-    handler(addMultipart(req, encoding))
+  def wrapCps(encoding: Option[Charset] = None): CpsMiddleware = cpsHandler => (req, k) => {
+    val req0 = addMultipart(req, encoding)
+
+    // Remember any temp files we created so we can clean them after other handlers are done
+    val tempFiles = Params.get(req0)
+      .multipartParams
+      .values
+      .collect { case FileParam(_, _, tempFile, _) => tempFile }
+      .toVector
+
+    cpsHandler(req0, resp => {
+      try {
+        k(resp)
+      } finally {
+        tempFiles.foreach(_.delete())
+      }
+    })
   }
+
+  def wrap(encoding: Option[Charset] = None): Middleware = wrapCps(encoding)
 
 }
