@@ -79,12 +79,24 @@ case class Request(
     } yield charset
   }
 
+  /** Helper to get content type since it is so commonly used. */
   def contentType: Option[String] = {
     headers.get("content-type")
   }
 
+  /** Helper to set content type since it is so commonly used.  Returns new Request. */
+  def setContentType(value: String): Request = {
+    addHeader("content-type", value)
+  }
+
+  /** Helper to get content length since it is so commonly used. */
   def contentLength: Option[Long] = {
     headers.get("content-length").flatMap(cl => Try(cl.toLong).toOption)
+  }
+
+  /** Helper to set content length since it is so commonly used.  Returns new Request. */
+  def setContentLength(value: Long): Request = {
+    addHeader("content-length", value.toString)
   }
 
 }
