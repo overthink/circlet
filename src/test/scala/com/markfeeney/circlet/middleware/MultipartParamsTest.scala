@@ -1,24 +1,14 @@
 package com.markfeeney.circlet.middleware
 
+import java.io.File
 import java.nio.charset.StandardCharsets
-import com.markfeeney.circlet.{Handler, HttpMethod, Request, Response, TestUtils, Util}
+import scala.io.Source
+import com.markfeeney.circlet.{Handler, HttpMethod, Response, TestUtils, Util}
 import org.scalatest.FunSuite
 
 class MultipartParamsTest extends FunSuite {
 
-  // helper to rip Params out of Request that the app ultimately sees
-  private def params(req: Request): Params = {
-    var ps: Params = null
-    val h: Handler = req => {
-      ps = Params.get(req)
-      Response()
-    }
-    val app = MultipartParams.wrap()(h)
-    app(req)
-    ps
-  }
-
-  test("simple basic multipart") {
+  test("basic multipart") {
 
     val body = "--XXXX\r\n" +
       "Content-Disposition: form-data; name=\"upload\"; filename=\"test.txt\"\r\n" +
@@ -29,15 +19,39 @@ class MultipartParamsTest extends FunSuite {
       "quux\r\n" +
       "--XXXX--"
 
-    val req = TestUtils.request(HttpMethod.Get, "/test")
+    val request = TestUtils.request(HttpMethod.Get, "/test")
       .copy(body = Some(Util.stringInputStream(body)))
       .setContentType("multipart/form-data; boundary=XXXX")
       .setContentLength(body.getBytes(StandardCharsets.UTF_8).length)
 
-    val ps = params(req)
-    assert(ps.all == Map[String, Param]("foo" -> "bar"))
-    assert(ps.queryParams == ps.all)
-    assert(ps.formParams == Map.empty)
+    var tempFile: File = null
+
+    val h: Handler = req => {
+      val ps = Params.get(req)
+      assert(ps.multipartParams.size == 2)
+      assert(ps.multipartParams.size == ps.all.size)
+      assert(ps.multipartParams.get("baz").contains(StrParam(Vector("quux"))))
+      ps.multipartParams.get("upload") foreach {
+        case FileParam(fileName, contentType, tempFile0, size) =>
+          tempFile = tempFile0
+          assert(fileName == "test.txt")
+          assert(contentType == "text/plain")
+          assert(tempFile0.exists())
+          assert(Source.fromFile(tempFile, "UTF-8").mkString == "foo bar!")
+          assert(size == 8)
+        case _ => fail("upload param should be FileParam")
+      }
+      Response()
+    }
+
+    val app = MultipartParams.wrap()(h)
+    app(request)
+
+    withClue("after request complete") {
+      assert(tempFile != null)
+      assert(!tempFile.exists(), "temp file was removed after request completed")
+    }
+
   }
 
 }

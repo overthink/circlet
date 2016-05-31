@@ -33,51 +33,61 @@ object MultipartParams {
     }
   }
 
-  /** Save the contents of `item` to a new temp file and return the temp file. */
-  private def saveFile(item: FileItemStream): File = {
+  /** Save the contents of `item` to a new temp file and return it. */
+  private def saveFile(item: FileItemStream): Either[Exception, File] = {
     val temp = File.createTempFile("circlet-multipart-", null)
-    val stream = item.openStream()
-    try {
-      Files.copy(stream, temp.toPath) // , StandardCopyOption.REPLACE_EXISTING)
-      temp
-    } catch {
-      case e: Exception =>
-        // TODO: this is not quite enough... consider case where some file uploads
-        // parse but others throw -- the parsed ones will be stranded on disk since
-        // the higher-level cleanup only works if addMultipart() returns successfully
-        temp.delete()
-        throw e
+    val result =
+      Cleanly(item.openStream())(_.close()) { stream =>
+        Files.copy(stream, temp.toPath, StandardCopyOption.REPLACE_EXISTING)
+        temp
+      }
+    // If the copy failed, clean up temp file -- there will be no other opportunity to do so
+    if (result.isLeft) {
+      temp.delete()
     }
-    finally {
-      stream.close()
-    }
+    result
   }
 
   /**
    * Parse `item` into a key value pair.
    */
-  private def parseFileItem(item: FileItemStream, encoding: Charset): (String, Param) = {
-    val name = item.getFieldName
-    val value: Param =
+  private def parseFileItem(item: FileItemStream, encoding: Charset): Either[Exception, (String, Param)] = {
+    val name: String = item.getFieldName
+    val parsed: Either[Exception, Param] =
       if (item.isFormField) {
         val str = Cleanly(item.openStream())(_.close()) { stream =>
           Streams.asString(stream, encoding.toString)
         }
-        // better to use Either or Option? Not convinced
-        str.right.get
+        str.right.map(s => StrParam(Vector(s)))
       } else {
-        val tempFile = saveFile(item)
-        FileParam(item.getName, item.getContentType, tempFile, tempFile.length())
+        saveFile(item).right.map { tempFile =>
+          FileParam(item.getName, item.getContentType, tempFile, tempFile.length())
+        }
       }
-    name -> value
+    parsed.right.map { value =>
+      name -> value
+    }
   }
 
   private def parseMultipart(req: Request, encoding: Charset): Map[String, Param] = {
     if (isMultipartForm(req)) {
       val ctx = uploadContext(req, encoding)
       val iter: FileItemIterator = new FileUpload().getItemIterator(ctx)
-      fileItems(iter)
-        .map(item => parseFileItem(item, encoding))
+      val parsed = fileItems(iter).map(parseFileItem(_, encoding))
+
+      // If any of the parsed params yielded an exception, then clean up any
+      // allocated temp files from other params and rethrow exception
+      parsed.find(_.isLeft).foreach { failed =>
+        parsed.foreach {
+          case Right((_, FileParam(_, _, tempFile, _))) => tempFile.delete()
+          case _ => // ignore
+        }
+        throw new RuntimeException("failed processing multipart param", failed.left.get)
+      }
+
+      parsed
+        .filter(_.isRight) // defensive; any Left should throw above
+        .map(_.right.get)
         .foldLeft(Map[String, Param]()) { case (acc, (k, v)) =>
           (acc.get(k), v) match {
             case (Some(StrParam(xs)), StrParam(ys)) =>
@@ -86,6 +96,7 @@ object MultipartParams {
               acc.updated(k, other)
           }
         }
+
     } else {
       Map.empty
     }
