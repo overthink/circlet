@@ -34,7 +34,7 @@ To get to a somewhat useful v1, I think I need the following done:
 * Middleware
   * ~~regular params (query string, post body)~~
   * cookies
-  * multipart params (i.e. file upload)
+  * ~~multipart params (i.e. file upload)~~
   * cookies
   * sessions
 
