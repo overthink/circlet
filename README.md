@@ -35,8 +35,8 @@ To get to a somewhat useful v1, I think I need the following done:
   * ~~regular params (query string, post body)~~
   * cookies
   * ~~multipart params (i.e. file upload)~~
-  * cookies
   * sessions
+  * serve static resources/files
 
 ## Design note
 
