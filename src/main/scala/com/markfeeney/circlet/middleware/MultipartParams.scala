@@ -3,12 +3,19 @@ package com.markfeeney.circlet.middleware
 import java.io.{File, InputStream}
 import java.nio.charset.Charset
 import java.nio.charset.StandardCharsets._
-import java.nio.file.{StandardCopyOption, CopyOption, Files}
-import com.markfeeney.circlet.{Middleware, Cleanly, CpsMiddleware, Request}
+import java.nio.file.{Files, StandardCopyOption}
 import com.markfeeney.circlet.CpsConverters._
+import com.markfeeney.circlet.{Cleanly, CpsMiddleware, Middleware, Request}
 import org.apache.commons.fileupload.util.Streams
 import org.apache.commons.fileupload.{FileItemIterator, FileItemStream, FileUpload, UploadContext}
 
+/**
+ * Provides middleware for parsing params from multipart/form-data request bodies.
+ * This is normally used for accepting file uploads from web browsers.
+ *
+ * At present, uploads are stored as temp files that exist for the duration of the request.
+ * Future improvement would be configurable storage engines like Ring does.
+ */
 object MultipartParams {
 
   private def isMultipartForm(req: Request): Boolean = {

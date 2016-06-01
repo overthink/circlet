@@ -13,7 +13,7 @@ class MultipartParamsTest extends FunSuite {
     val body = "--XXXX\r\n" +
       "Content-Disposition: form-data; name=\"upload\"; filename=\"test.txt\"\r\n" +
       "Content-Type: text/plain\r\n\r\n" +
-      "foo bar!\r\n" +
+      "foo\nbar!\r\n" +
       "--XXXX\r\n" +
       "Content-Disposition: form-data; name=\"baz\"\r\n\r\n" +
       "quux\r\n" +
@@ -37,7 +37,7 @@ class MultipartParamsTest extends FunSuite {
           assert(fileName == "test.txt")
           assert(contentType == "text/plain")
           assert(tempFile0.exists())
-          assert(Source.fromFile(tempFile, "UTF-8").mkString == "foo bar!")
+          assert(Source.fromFile(tempFile, "UTF-8").mkString == "foo\nbar!")
           assert(size == 8)
         case _ => fail("upload param should be FileParam")
       }
