@@ -12,11 +12,71 @@ import org.apache.commons.fileupload.{FileItemIterator, FileItemStream, FileUplo
 /**
  * Provides middleware for parsing params from multipart/form-data request bodies.
  * This is normally used for accepting file uploads from web browsers.
- *
- * At present, uploads are stored as temp files that exist for the duration of the request.
- * Future improvement would be configurable storage engines like Ring does.
  */
 object MultipartParams {
+
+  /**
+   * Functionality for storing multipart file uploads.
+   * (This is a trait largely for testability, but also a handy hook for storing uploads
+   * in different ways.)
+   */
+  trait StorageEngine {
+    /** Parse a FileItemStream into a named Param. */
+    def parseFileItem(item: FileItemStream, encoding: Charset): Either[Exception, (String, Param)]
+
+    /** Release any resources related to param. */
+    def dispose(param: Param): Unit
+  }
+
+  object StorageEngine {
+
+    /** Store file uploads in temp files. */
+    object TempFile extends StorageEngine {
+
+      /** Save the contents of `item` to a new temp file and return it. */
+      private def saveFile(item: FileItemStream): Either[Exception, File] = {
+        val temp = File.createTempFile("circlet-multipart-", null)
+        val result =
+          Cleanly(item.openStream())(_.close()) { stream =>
+            Files.copy(stream, temp.toPath, StandardCopyOption.REPLACE_EXISTING)
+            temp
+          }
+        // If the copy failed, clean up temp file -- there will be no other opportunity to do so
+        if (result.isLeft) {
+          temp.delete()
+        }
+        result
+      }
+
+      override def parseFileItem(item: FileItemStream, encoding: Charset): Either[Exception, (String, Param)] = {
+        val name: String = item.getFieldName
+        val parsed: Either[Exception, Param] =
+          if (item.isFormField) {
+            val str = Cleanly(item.openStream())(_.close()) { stream =>
+              Streams.asString(stream, encoding.toString)
+            }
+            str.right.map(s => StrParam(Vector(s)))
+          } else {
+            saveFile(item).right.map { tempFile =>
+              // for default content type: https://www.ietf.org/rfc/rfc2388.txt
+              val ct = Option(item.getContentType).getOrElse("application/octet-stream")
+              FileParam(item.getName, ct, tempFile, tempFile.length())
+            }
+          }
+        parsed.right.map { value =>
+          name -> value
+        }
+      }
+
+      override def dispose(param: Param): Unit = {
+        param match {
+          case FileParam(_, _, tempFile, _) => tempFile.delete()
+          case _ => // ignore
+        }
+      }
+
+    }
+  }
 
   private def isMultipartForm(req: Request): Boolean = {
     req.contentType.exists(_.startsWith("multipart/form-data"))
@@ -40,53 +100,17 @@ object MultipartParams {
     }
   }
 
-  /** Save the contents of `item` to a new temp file and return it. */
-  private def saveFile(item: FileItemStream): Either[Exception, File] = {
-    val temp = File.createTempFile("circlet-multipart-", null)
-    val result =
-      Cleanly(item.openStream())(_.close()) { stream =>
-        Files.copy(stream, temp.toPath, StandardCopyOption.REPLACE_EXISTING)
-        temp
-      }
-    // If the copy failed, clean up temp file -- there will be no other opportunity to do so
-    if (result.isLeft) {
-      temp.delete()
-    }
-    result
-  }
-
-  /**
-   * Parse `item` into a key value pair.
-   */
-  private def parseFileItem(item: FileItemStream, encoding: Charset): Either[Exception, (String, Param)] = {
-    val name: String = item.getFieldName
-    val parsed: Either[Exception, Param] =
-      if (item.isFormField) {
-        val str = Cleanly(item.openStream())(_.close()) { stream =>
-          Streams.asString(stream, encoding.toString)
-        }
-        str.right.map(s => StrParam(Vector(s)))
-      } else {
-        saveFile(item).right.map { tempFile =>
-          FileParam(item.getName, item.getContentType, tempFile, tempFile.length())
-        }
-      }
-    parsed.right.map { value =>
-      name -> value
-    }
-  }
-
-  private def parseMultipart(req: Request, encoding: Charset): Map[String, Param] = {
+  private def parseMultipart(req: Request, encoding: Charset, storage: StorageEngine): Map[String, Param] = {
     if (isMultipartForm(req)) {
       val ctx = uploadContext(req, encoding)
       val iter: FileItemIterator = new FileUpload().getItemIterator(ctx)
-      val parsed = fileItems(iter).map(parseFileItem(_, encoding))
+      val parsed = fileItems(iter).map(storage.parseFileItem(_, encoding))
 
       // If any of the parsed params yielded an exception, then clean up any
       // allocated temp files from other params and rethrow exception
       parsed.find(_.isLeft).foreach { failed =>
         parsed.foreach {
-          case Right((_, FileParam(_, _, tempFile, _))) => tempFile.delete()
+          case Right((_, param)) => storage.dispose(param)
           case _ => // ignore
         }
         throw new RuntimeException("failed processing multipart param", failed.left.get)
@@ -109,10 +133,10 @@ object MultipartParams {
     }
   }
 
-  private def addMultipart(req: Request, encoding: Option[Charset]): Request = {
+  private def addMultipart(req: Request, encoding: Option[Charset], storage: StorageEngine): Request = {
     val enc: Charset = encoding.orElse(req.characterEncoding).getOrElse(UTF_8)
     // Regular Params middleware may have parsed some params already; don't trample
-    val params = Params.get(req).copy(multipartParams = parseMultipart(req, enc))
+    val params = Params.get(req).copy(multipartParams = parseMultipart(req, enc, storage))
     Params.set(req, params)
   }
 
@@ -124,26 +148,31 @@ object MultipartParams {
    * @param encoding The encoding used for multipart parsting. If not specified,
    *                 uses the request character encoding, or UTF-8 if no request
    *                 encoding can be found.
+   * @param storage Used to store file upload params. Default impl uses temp files on disk.
    */
-  def wrapCps(encoding: Option[Charset] = None): CpsMiddleware = cpsHandler => (req, k) => {
-    val req0 = addMultipart(req, encoding)
+  def wrapCps(
+      encoding: Option[Charset] = None,
+      storage: StorageEngine = StorageEngine.TempFile): CpsMiddleware = cpsHandler => (req, k) => {
 
-    // Remember any temp files we created so we can clean them after other handlers are done
-    val tempFiles = Params.get(req0)
-      .multipartParams
-      .values
-      .collect { case FileParam(_, _, tempFile, _) => tempFile }
-      .toVector
+    val req0 = addMultipart(req, encoding, storage)
+
+    // Remember the params we just created so we can dispose of them when request done
+    val params = Params.get(req0).multipartParams.values
 
     cpsHandler(req0, resp => {
       try {
         k(resp)
       } finally {
-        tempFiles.foreach(_.delete())
+        params.foreach(storage.dispose)
       }
     })
   }
 
-  def wrap(encoding: Option[Charset] = None): Middleware = wrapCps(encoding)
+  /** Non-CPS helper. See `wrapCps()`. */
+  def wrap(
+      encoding: Option[Charset] = None,
+      storage: StorageEngine = StorageEngine.TempFile): Middleware = {
+    wrapCps(encoding, storage)
+  }
 
 }
