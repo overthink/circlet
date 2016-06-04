@@ -13,7 +13,8 @@ libraryDependencies ++= Seq(
   "org.eclipse.jetty" % "jetty-server" % "9.2.16.v20160414", // 9.3 needs Java 8, so stick with 9.2 for now
   "commons-fileupload" % "commons-fileupload" % "1.3.1",
   "org.scalatest" % "scalatest_2.11" % "2.2.6" % "test",
-  "com.mashape.unirest" % "unirest-java" % "1.4.9" % "test"
+  "com.mashape.unirest" % "unirest-java" % "1.4.9" % "test",
+  "org.antlr" % "antlr4-runtime" % "4.5.3" // route parser needs this; later move to own project
 )
 
 // Stuff related to publishing to sonatype
@@ -42,3 +43,5 @@ pomExtra := (
     </developer>
   </developers>)
 
+antlr4Settings
+antlr4PackageName in Antlr4 := Some("com.markfeeney.poise.parser")
