@@ -1,15 +1,14 @@
 # Circlet
 
 Circlet is a Scala web application library heavily inspired by Clojure's
-[Ring](https://github.com/ring-clojure/ring).  If we're truthful, it's a port of Ring.
-Its main feature is that it allows (forces) you to write your application as a function of 
-type `Request => Response`.  It also hides the details of the underlying web server 
+[Ring](https://github.com/ring-clojure/ring).  If we're truthful, it's basically a port of Ring.
+Its main feature is that it allows (forces) you to write your application as a simple function
+from `Request` to `Response`.  It also hides the details of the underlying web server 
 (which is always Jetty at the moment).
 
-As with Ring, middleware (functions of type `(Request => Response) => (Request => Response)`) 
-is used for adding reusable bits of functionality to applications.  Circlet includes a bunch of
-useful middleware like parameter parsing, file upload handling, cookies, sessions, 
-and serving static resources.
+As with Ring, middleware functions are used for adding reusable bits of functionality to 
+applications. Circlet includes some useful middleware like parameter parsing, 
+and file upload handling.
 
 Circlet is named after Ring in a very clever and original way.
 
@@ -23,10 +22,6 @@ Circlet is named after Ring in a very clever and original way.
 1. Type safe
 1. Fast enough
 
-## Status
-
-Minimal middleware exists so far.  Probably not yet useful in production.
-
 ## TODO
 
 To get to a somewhat useful v1, I think I need the following done:
@@ -38,31 +33,39 @@ To get to a somewhat useful v1, I think I need the following done:
   * sessions
   * serve static resources/files
 
-## Design note
+## Design
 
 Presently, the web server interface expects handlers (and thus middleware) to be implemented in 
-continuation-passing style ([CPS](https://en.wikipedia.org/wiki/Continuation-passing_style)). e.g.
+continuation-passing style ([CPS](https://en.wikipedia.org/wiki/Continuation-passing_style)).
 
 ```scala
-// this
+// important types
+type CpsHandler = (Request, Response => Done.type) => Done.type
+type Handler = Request => Response
+```
+
+e.g. You need to write this:
+
+```scala
 val cpsHelloWorld: CpsHandler = (request, k) => {
   val resp = Response(body = "hello world")
   k(resp)
 }
+```
 
-// instead of
+instead of this:
+
+```scala
 val helloWorld: Handler = request => {
   Response(body = "hello world")
 }
 ```
 
-This is kind of a pain for simple cases, so I've provided [some conversions](src/main/scala/com/markfeeney/circlet/CpsConverters.scala) 
-to automatically convert simple handlers and middleware to their CPS counterparts. This means you 
-can largeley ignore CPS and write simple handlers and middleware most of the time.
+I've done this so handlers can allocate "request scoped" resources and properly clean them up when request
+processing is complete.  As an example, Circlet's multipart parameter middleware uses this to 
+[clean up temp files](src/main/scala/com/markfeeney/circlet/middleware/MultipartParams.scala#L163-L167) created
+when handling file uploads.  Here's another (contrived) example: streaming a response from the database.
 
-One scenario where you might want CPS is when a handler needs to clean up resources it has allocated, but
-not until the response body has been completely sent, e.g. in a streaming response. e.g.
- 
 ```scala
 val streamingHandler: CpsHandler = (req, k) => {
   val conn = // get a db connection or some expensive resource needing cleanup
@@ -75,10 +78,13 @@ val streamingHandler: CpsHandler = (req, k) => {
 }
 ```
 
-A similar thing can be achieved in Ring using its [piped input stream](https://github.com/ring-clojure/ring/blob/d302502ea4da392016963d33bd81028bc761d8c8/ring-core/src/ring/util/io.clj#L26-L29), 
-but it involves an additional thread (which I don't love).  All this CPS business is borrowed directly
-from Haskell's [WAI](https://hackage.haskell.org/package/wai-3.2.1/docs/Network-Wai.html) (thanks [stebulus](https://github.com/stebulus)),
-which I should probably study more.
+All this CPS business is borrowed directly from Haskell's [WAI](https://hackage.haskell.org/package/wai-3.2.1/docs/Network-Wai.html)
+(thanks [stebulus](https://github.com/stebulus)), which I should probably study more.
 
-CPS significantly complicates writing (and more importantly, reading) handlers and middleware (IMO),
-so I'm not sure if I'll keep this.  It's nice to have the option, but how commonly is it actually needed? TBD.
+Finally, sometimes CPS is a pain for simple handlers, so I've provided some [conversions](src/main/scala/com/markfeeney/circlet/CpsConverters.scala) 
+to automatically convert non-CPS handlers and middleware to their CPS counterparts.  TBD if this will prove
+useful or not.
+
+## Known issues
+
+* A CPS handler could call he continuation function multiple times.  I'm not sure how to prevent this, so don't do it.
