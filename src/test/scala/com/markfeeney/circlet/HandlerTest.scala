@@ -49,7 +49,7 @@ class HandlerTest extends FunSuite {
     app0(req, resp => {
       assert(resp.status == 200)
       assert(resp.body.isEmpty)
-      Done
+      Sent
     })
   }
 }

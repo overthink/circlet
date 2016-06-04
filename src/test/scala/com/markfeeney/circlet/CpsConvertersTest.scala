@@ -23,7 +23,7 @@ class CpsConvertersTest extends FunSuite {
       withClue("Same asserts work on resp created with CPS handler") {
         runAsserts(resp)
       }
-      Done
+      Sent
     })
 
   }
@@ -56,7 +56,7 @@ class CpsConvertersTest extends FunSuite {
         assert(resp.body.contains(StringBody("Hello world")))
         assert(savedReq.headers.get("new-req-header").contains("true"))
         assert(resp.headers.get("new-resp-header").contains(Vector("true")))
-        Done
+        Sent
       })
     }
 

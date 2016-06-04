@@ -116,7 +116,7 @@ object JettyAdapter {
         val req: Request = Servlet.buildRequest(request)
         handler(req, resp => {
           Servlet.updateServletResponse(response, resp)
-          Done
+          Sent
         })
         baseRequest.setHandled(true)
       }

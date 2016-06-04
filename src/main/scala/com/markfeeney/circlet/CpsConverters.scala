@@ -16,7 +16,7 @@ object CpsConverters {
     request => {
       cpsH(request, response => {
         resp = response
-        Done
+        Sent
       })
       resp
     }

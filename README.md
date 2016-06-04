@@ -40,7 +40,7 @@ continuation-passing style ([CPS](https://en.wikipedia.org/wiki/Continuation-pas
 
 ```scala
 // important types
-type CpsHandler = (Request, Response => Done.type) => Done.type
+type CpsHandler = (Request, Response => Sent.type) => Sent.type
 type Handler = Request => Response
 ```
 
