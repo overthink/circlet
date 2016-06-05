@@ -2,20 +2,31 @@ grammar Route;
 
 // parser rules (start with lowercase)
 
-route : ('/' pathElem)+ ;
+route
+  : (literal | param | wildcard)+
+  ;
 
-pathElem : literal
-         | wildcard
-         | param
-         ;
+literal
+  : LITERAL
+  ;
 
-literal: Literal ;
-wildcard : '*';
-param : ':' Literal ;
+param
+  : PARAM
+  ;
 
-// lexer rules (start with uppercase)
+wildcard
+  : '*'
+  ;
 
-fragment IdentifierChar : [a-zA-Z0-9-_] ;
-fragment HexDigit : [a-fA-F0-9] ;
-fragment PercentEncoded : '%' HexDigit HexDigit ;
-Literal : (IdentifierChar | PercentEncoded)+ ;
+// anything not part of a param or wildcard
+LITERAL
+  : ~[:*{}\\]+
+  ;
+
+IDENTIFIER
+  : [a-zA-Z0-9-_]+
+  ;
+
+PARAM
+  : ':' IDENTIFIER  { setText(getText().substring(1)); } // trim leading ':'
+  ;
