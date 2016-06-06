@@ -11,6 +11,11 @@ class RouteTest extends FunSuite {
     intercept[ParseCancellationException](Route.compile(""))
   }
 
+  test("invalid chars in route") {
+    intercept[ParseCancellationException](Route.compile("/a b/c"))
+    intercept[ParseCancellationException](Route.compile("/a\tb"))
+  }
+
   test("static routes") {
     def t(path: String) = Route.parse(Route.compile(path), path)
     assert(t("/") == Map.empty)
@@ -19,15 +24,23 @@ class RouteTest extends FunSuite {
     assert(t("/foo/bar.html") == Map.empty)
   }
 
-  ignore("parser debugging") {
-    def t(s: String) = Route.compile(s)
-    t("/")
-    t("/foo")
-    t("/foo/bar")
-    t("/foo/:id")
-    t("/foo/:id/bar")
-    t("/foo/:id/bar/:barid")
-    t("/foo/*/bar/:id/a/:id2/b")
+  test("route param extraction") {
+    def t(path: String): Vector[String] = {
+      val r = Route.compile(path)
+      assert(r.path == path)
+      r.paramNames
+    }
+    assert(t("/") == Vector.empty)
+    assert(t("/foo") == Vector.empty)
+    assert(t("/foo/bar") == Vector.empty)
+    assert(t("/foo/:id") == Vector("id"))
+    assert(t("/foo/:id/bar") == Vector("id"))
+    assert(t("/foo/:id/bar/:bar-id") == Vector("id", "bar-id"))
+    assert(t("/foo/*/bar/:id/*/:id2/b") == Vector("*", "id", "*", "id2"))
+    assert(t("/:x/:x/:y/:x") == Vector("x", "x", "y", "x"))
+    assert(t("/foo/:x.y") == Vector("x.y"))
+    assert(t("/:ä/:ش") == Vector("ä", "ش"))
+    assert(t("/foo%20bar/:baz") == Vector("baz"))
   }
 
 }

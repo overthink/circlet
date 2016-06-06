@@ -18,13 +18,23 @@ wildcard
   : '*'
   ;
 
-// anything not part of a param or wildcard
-LITERAL
-  : ~[:*{}\\]+
+fragment HEX
+  : [a-fA-F0-9]
   ;
 
+fragment PCT_ENC
+  : '%' HEX HEX
+  ;
+
+// really "allowed in URL path", vaguely based on RFC-3986, definitely not
+// correct, but good enough
+LITERAL
+  : ([a-zA-Z0-9-._~/] | PCT_ENC)+
+  ;
+
+// Extremely permissive identifiers / lazy unicode support
 IDENTIFIER
-  : [a-zA-Z0-9-_]+
+  : ~[/:*{}\\ \t\r\n]+
   ;
 
 PARAM

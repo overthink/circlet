@@ -11,6 +11,7 @@ import org.antlr.v4.runtime.{CommonTokenStream, RecognitionException, Recognizer
 trait Route {
   // e.g. "/foo/:fooId/bar/:barId"
   def path: String
+  def paramNames: Vector[String]
 }
 
 // Based on clout: https://github.com/weavejester/clout
