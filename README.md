@@ -78,12 +78,18 @@ val streamingHandler: CpsHandler = (req, k) => {
 }
 ```
 
-All this CPS business is borrowed directly from Haskell's [WAI](https://hackage.haskell.org/package/wai-3.2.1/docs/Network-Wai.html)
-(thanks [stebulus](https://github.com/stebulus)), which I should probably study more.
+This is nice, but in theory CPS can easily blow the stack since nothing really returns.  I'm hoping this
+won't be a problem in practice since most apps won't compose more than a few tens of middleware and
+handlers, and presumable user code running inside handlers won't use CPS.  But I'm not sure, so this
+is all subject to change.
 
-Finally, sometimes CPS is a pain for simple handlers, so I've provided some [conversions](src/main/scala/com/markfeeney/circlet/CpsConverters.scala) 
-to automatically convert non-CPS handlers and middleware to their CPS counterparts.  TBD if this will prove
-useful or not.
+Also CPS is unfamiliar to many and makes simple handlers more painful to write, so I've provided
+some [conversions](src/main/scala/com/markfeeney/circlet/CpsConverters.scala) to automatically
+convert non-CPS handlers and middleware to their CPS counterparts.  TBD if this is sane or
+useful.
+
+This CPS approach is borrowed from Haskell's [WAI](https://hackage.haskell.org/package/wai-3.2.1/docs/Network-Wai.html)
+(thanks [stebulus](https://github.com/stebulus)).
 
 ## Known issues
 
