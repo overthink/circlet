@@ -2,7 +2,7 @@ package com.markfeeney.poise
 
 import scala.collection.mutable.ListBuffer
 import scala.util.matching.Regex
-import com.markfeeney.poise.parser.RouteParser.{RouteContext, WildcardContext, ParamContext}
+import com.markfeeney.poise.parser.RouteParser.{LiteralContext, RouteContext, WildcardContext, ParamContext}
 import com.markfeeney.poise.parser.{RouteBaseListener, RouteParser, RouteLexer}
 import org.antlr.v4.runtime.misc.ParseCancellationException
 import org.antlr.v4.runtime.tree.ParseTreeWalker
@@ -56,7 +56,7 @@ object Route {
     parser.removeErrorListeners()
     parser.addErrorListener(ThrowingErrorListener) // throw a reasonable exception on failed parsing
     val tree = parser.route()
-    println(tree.toStringTree(parser)) // useful debug
+    // println(tree.toStringTree(parser)) // useful debug
     tree
   }
 
@@ -65,15 +65,24 @@ object Route {
   private def paramNames(parseTree: RouteContext): Vector[String] = {
     val params: ListBuffer[String] = ListBuffer.empty
     val listener = new RouteBaseListener {
-      override def enterParam(ctx: ParamContext): Unit = {
-        params.append(ctx.getText)
-      }
-      override def enterWildcard(ctx: WildcardContext): Unit = {
-        params.append(ctx.getText)
-      }
+      override def enterParam(ctx: ParamContext): Unit = params.append(ctx.getText)
+      override def enterWildcard(ctx: WildcardContext): Unit = params.append(ctx.getText)
     }
     ParseTreeWalker.DEFAULT.walk(listener, parseTree)
     params.toVector
+  }
+
+  // walk the parse tree and replace each parameter or wildcard with a regex that
+  // will capture that part of a URL.
+  private def buildRegex(parseTree: RouteContext): Regex = {
+    val str = new StringBuilder("^")
+    val listener = new RouteBaseListener {
+      override def enterLiteral(ctx: LiteralContext): Unit = str.append(ctx.LITERAL())
+      override def enterParam(ctx: ParamContext): Unit = str.append("([^/?]+)")
+      override def enterWildcard(ctx: WildcardContext): Unit = str.append("(.*?)")
+    }
+    ParseTreeWalker.DEFAULT.walk(listener, parseTree)
+    str.r
   }
 
   // - parse path into route AST
@@ -82,8 +91,10 @@ object Route {
   def compile(path: String): Route = {
     val parseTree = parseRoute(path)
     val params = paramNames(parseTree)
-    // walk the parse tree and pull out the params we find (in order of appearance)
-    Impl(path, params, "".r)
+    val regex = buildRegex(parseTree)
+    // println(path)
+    // println(regex)
+    Impl(path, params, regex)
   }
 
   // Use route's compiled regex to match url
