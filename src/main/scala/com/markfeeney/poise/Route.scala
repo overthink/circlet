@@ -1,5 +1,6 @@
 package com.markfeeney.poise
 
+import scala.language.implicitConversions
 import scala.collection.mutable.ListBuffer
 import scala.util.matching.Regex
 import com.markfeeney.poise.parser.RouteParser.{LiteralContext, RouteContext, WildcardContext, ParamContext}
@@ -12,6 +13,7 @@ trait Route {
   // e.g. "/foo/:fooId/bar/:barId"
   def path: String
   def paramNames: Vector[String]
+  def regex: Regex
 }
 
 // Based on clout: https://github.com/weavejester/clout
@@ -21,9 +23,13 @@ object Route {
     def value: String
   }
   final case class Single(value: String) extends ParamValue
-  final case class Multiple(xs: Vector[String]) {
+  final case class Multiple(xs: Vector[String]) extends ParamValue {
     assert(xs.nonEmpty, "Multiple must contain at least one value")
     def value: String = xs.head
+  }
+  object ParamValue {
+    implicit def str2Single(s: String): Single = Single(s)
+    implicit def vec2Multiple(vec: Vector[String]): Multiple = Multiple(vec)
   }
 
   case class Impl private(
@@ -101,7 +107,21 @@ object Route {
   // associate param names with whatever regex captured
   // return as map
   def parse(route: Route, url: String): Map[String, ParamValue] = {
-    Map.empty
+    route.regex.findFirstMatchIn(url) match {
+      case Some(m) =>
+        route.paramNames
+          .zipWithIndex
+          .map { case (param, i) => param -> m.group(i + 1) }
+          .foldLeft(Map[String, ParamValue]()) { case (acc, (k, v)) =>
+            acc.get(k) match {
+              case Some(Single(oldV)) => acc.updated(k, Vector(oldV, v))
+              case Some(Multiple(vs)) => acc.updated(k, vs :+ v)
+              case _ => acc.updated(k, v)
+            }
+          }
+      case None =>
+        Map.empty
+    }
   }
 
 }
