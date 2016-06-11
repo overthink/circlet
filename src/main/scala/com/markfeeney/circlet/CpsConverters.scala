@@ -12,7 +12,7 @@ object CpsConverters {
   }
 
   implicit def cps2Handler(cpsH: CpsHandler): Handler = {
-    var resp: Response = null // yes really, much evil here
+    var resp: Option[Response] = None // yes really, much evil here
     request => {
       cpsH(request, response => {
         resp = response

@@ -16,11 +16,12 @@ object Head {
         case HttpMethod.Head => req.copy(requestMethod = HttpMethod.Get)
         case _ => req
       }
-      val resp = handler(req0)
-      if (req.requestMethod == HttpMethod.Head) {
-        resp.copy(body = None)
-      } else {
-        resp
+      handler(req0).map { resp =>
+        if (req.requestMethod == HttpMethod.Head) {
+          resp.copy(body = None)
+        } else {
+          resp
+        }
       }
     }
   }

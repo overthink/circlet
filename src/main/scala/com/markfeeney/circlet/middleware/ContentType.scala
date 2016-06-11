@@ -13,12 +13,13 @@ import com.markfeeney.circlet.Util.MimeTypes
 object ContentType {
 
   def wrap(overrides: MimeTypes = Map.empty): Middleware = handler => req => {
-    val resp = handler(req)
-    if (resp.headers.get("Content-Type").isDefined) {
-      resp
-    } else {
-      val mimeType = Util.mimeType(req.uri, overrides).getOrElse("application/octet-stream")
-      resp.addHeader("Content-Type", mimeType)
+    handler(req).map { resp =>
+      if (resp.headers.get("Content-Type").isDefined) {
+        resp
+      } else {
+        val mimeType = Util.mimeType(req.uri, overrides).getOrElse("application/octet-stream")
+        resp.addHeader("Content-Type", mimeType)
+      }
     }
   }
 

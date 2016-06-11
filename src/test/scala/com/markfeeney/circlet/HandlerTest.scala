@@ -19,7 +19,7 @@ class HandlerTest extends FunSuite {
       requestMethod = HttpMethod.Head
     )
 
-    val resp = app0(req)
+    val resp = app0(req).get
     assert(resp.status == 200)
     assert(resp.body.isEmpty)
 
@@ -46,10 +46,12 @@ class HandlerTest extends FunSuite {
       requestMethod = HttpMethod.Head
     )
 
-    app0(req, resp => {
-      assert(resp.status == 200)
-      assert(resp.body.isEmpty)
-      Sent
+    app0(req, {
+      case None => fail("expected response")
+      case Some(resp) =>
+        assert(resp.status == 200)
+        assert(resp.body.isEmpty)
+        Sent
     })
   }
 }

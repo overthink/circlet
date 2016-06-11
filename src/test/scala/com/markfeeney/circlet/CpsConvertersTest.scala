@@ -9,7 +9,8 @@ class CpsConvertersTest extends FunSuite {
 
   test("Handler converted to CpsHandler still works") {
 
-    def runAsserts(resp: Response): Unit = {
+    def runAsserts(optResp: Option[Response]): Unit = {
+      val resp = optResp.get
       assert(resp.body.contains(StringBody("Foo!")))
       assert(resp.headers == Map("X-Foo" -> Vector("42")))
     }
@@ -31,8 +32,9 @@ class CpsConvertersTest extends FunSuite {
   test("Middleware converted to CpsMiddleware still works") {
     val mw: Middleware = handler => req => {
       val req0 = req.copy(headers = req.headers.updated("new-req-header", "true"))
-      val resp = handler(req0)
-      resp.copy(headers = resp.headers.updated("new-resp-header", Vector("true")))
+      handler(req0).map { resp =>
+        resp.copy(headers = resp.headers.updated("new-resp-header", Vector("true")))
+      }
     }
 
     val h: Handler = req => {
@@ -42,7 +44,7 @@ class CpsConvertersTest extends FunSuite {
 
     withClue("test basic middleware") {
       val h0 = mw(h)
-      val resp = h0(TestUtils.request(Get, "/"))
+      val resp = h0(TestUtils.request(Get, "/")).get
       val savedReq = resp.attrs("request").asInstanceOf[Request]
       assert(resp.body.contains(StringBody("Hello world")))
       assert(savedReq.headers.get("new-req-header").contains("true"))
@@ -51,12 +53,14 @@ class CpsConvertersTest extends FunSuite {
 
     withClue("same tests with CPS middleware") {
       val cpsH: CpsHandler = mw(h) // 2 layers of implicits enable this, sorry
-      cpsH(TestUtils.request(Get, "/"), resp => {
-        val savedReq = resp.attrs("request").asInstanceOf[Request]
-        assert(resp.body.contains(StringBody("Hello world")))
-        assert(savedReq.headers.get("new-req-header").contains("true"))
-        assert(resp.headers.get("new-resp-header").contains(Vector("true")))
-        Sent
+      cpsH(TestUtils.request(Get, "/"), {
+        case None => fail("expected response")
+        case Some(resp) =>
+          val savedReq = resp.attrs("request").asInstanceOf[Request]
+          assert(resp.body.contains(StringBody("Hello world")))
+          assert(savedReq.headers.get("new-req-header").contains("true"))
+          assert(resp.headers.get("new-resp-header").contains(Vector("true")))
+          Sent
       })
     }
 

@@ -114,7 +114,11 @@ object JettyAdapter {
           request: HttpServletRequest,
           response: HttpServletResponse): Unit = {
         val req: Request = Servlet.buildRequest(request)
-        handler(req, resp => {
+        handler(req, optResp => {
+          val resp = optResp.getOrElse {
+            // TBD if this is a good way to handle this case
+            Response(body = "No response generated", status = 500)
+          }
           Servlet.updateServletResponse(response, resp)
           Sent
         })

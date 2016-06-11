@@ -26,14 +26,14 @@ object ScratchPad {
 
     val filter: CpsMiddleware = handler => (req, k) => {
       handler(req, resp => {
-        println("filter begin")
-        val newBody = resp.body match {
-          case Some(SeqBody(xs)) => Some(SeqBody(xs.take(100)))
-          case other => other
-        }
-        val result = k(resp.copy(body = newBody))
-        println("filter end")
-        result
+          println("filter begin")
+          val newBody = resp.flatMap(_.body) match {
+            case Some(SeqBody(xs)) => Some(SeqBody(xs.take(100)))
+            case other => other
+          }
+          val result = k(resp.map(_.copy(body = newBody)))
+          println("filter end")
+          result
       })
     }
 

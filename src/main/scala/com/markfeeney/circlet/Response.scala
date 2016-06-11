@@ -1,5 +1,7 @@
 package com.markfeeney.circlet
 
+import scala.language.implicitConversions
+
 /**
  * Basic response. Modeled after Response Map in https://github.com/ring-clojure/ring/blob/master/SPEC
  *
@@ -39,4 +41,15 @@ case class Response(
   def addHeader(name: String, value: String): Response = {
     addHeader(name, Vector(value))
   }
+}
+
+object Response {
+  // This signficantly cleans up the syntax around building handlers with
+  // -- I think -- little risk/surprise to users.
+  implicit def resp2OptResp(resp: Response): Option[Response] = Some(resp)
+
+  // This one I specifically do not want, and leave it commented out as a warning
+  // to my future self.  It "works", but it's too surprising to magically
+  // insert an Option#get() without the user being aware.
+  // implicit def optResp2Resp(resp: Option[Response]): Response = resp.get
 }

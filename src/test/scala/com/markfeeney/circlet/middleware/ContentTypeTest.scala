@@ -9,7 +9,7 @@ class ContentTypeTest extends FunSuite {
   private val wrapped: Handler = ContentType.wrap()(hwApp)
 
   private def contentType(path: String): Option[Vector[String]] = {
-    wrapped(request(HttpMethod.Get, path)).headers.get("Content-Type")
+    wrapped(request(HttpMethod.Get, path)).flatMap(_.headers.get("Content-Type"))
   }
 
   test("known extension gets correct content type") {

@@ -10,14 +10,14 @@ class HeadTest extends FunSuite {
   private val wrapped: Handler = Head.wrap(hwApp)
 
   test("something responding to GET also responds to HEAD") {
-    val getResp = hwApp(request(HttpMethod.Get, "/"))
+    val getResp = hwApp(request(HttpMethod.Get, "/")).get
     withClue("get expected response with GET") {
       assert(getResp.status == 200)
       assert(getResp.headers.get("X-Foo").contains(Vector("42")))
       assert(getResp.body.contains(StringBody("Hello world")))
     }
 
-    val headResp = wrapped(request(HttpMethod.Head, "/"))
+    val headResp = wrapped(request(HttpMethod.Head, "/")).get
     withClue("response to HEAD is same as GET, sans body") {
       assert(headResp == getResp.copy(body = None))
     }
