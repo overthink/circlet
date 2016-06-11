@@ -14,8 +14,8 @@ import com.markfeeney.circlet.{Util, Middleware, Request}
  * @param multipartParams Params from a multipart form post (multipart/form-data)
  */
 case class Params(
-    queryParams: Map[String, StrParam] = Map.empty,
-    formParams: Map[String, StrParam] = Map.empty,
+    queryParams: Map[String, Param] = Map.empty,
+    formParams: Map[String, Param] = Map.empty,
     multipartParams: Map[String, Param] = Map.empty) {
 
   /**

@@ -7,7 +7,8 @@ scalacOptions ++= Seq(
   "-deprecation",
   "-feature",
   "-Xfatal-warnings",
-  "-Xlint"
+  "-Xlint",
+  "-Ywarn-unused-import"
 )
 libraryDependencies ++= Seq(
   "org.eclipse.jetty" % "jetty-server" % "9.2.16.v20160414", // 9.3 needs Java 8, so stick with 9.2 for now

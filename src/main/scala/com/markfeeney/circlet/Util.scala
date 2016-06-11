@@ -133,8 +133,7 @@ object Util {
    * Decode a www-form-urlencoded string, if possible.
    *
    * The primary way a string cannot be
-   * decoded is if invalid percent-encoded hex digits appear, e.g. `%zz`.  Theoretically `charset`
-   * could be invalid, but that seems impossible due to us requiring `Charset` instances.
+   * decoded is if invalid percent-encoded hex digits appear, e.g. `%zz`.
    *
    * @param encoded a www-form-urlencoded string
    * @param encoding the encoding of `encoded`
@@ -145,30 +144,34 @@ object Util {
   }
 
   /**
-   * Decode a www-form-urlencoded string to a Map. Useful for decoding form bodies.
+   * Decode a www-form-urlencoded string to a Map. Useful for decoding form bodies and query strings.
    *
    * @param encoded a www-form-urlencoded string, presumably with `&` separating kvs, and `=`
    *                separating keys and values. e.g. `foo=bar&baz=quux`.
    * @param encoding The charset to use when decoding
-   * @return a map of decoded values. Portions of `encoded` that can't be decoded into a map will be discarded.
+   * @return A map of decoded names and values.  The values are all vectors.  A name with no value,
+   *        e.g. `foo` in `a=b&foo` ends up with key `foo` and an empty Vector as its value.
+   *        Repeated names, e.g. `x` in `x=1&x=2` ends up as key `x` with a vector of multiple
+   *        values.  The typical case `a=b&c=d` decodes values as single element Vectors.
+   *        Portions of `encoded` that can't be decoded into a map will be discarded.
    */
   def formDecodeMap(encoded: String, encoding: Charset): Map[String, Vector[String]] = {
-    encoded.split("&").foldLeft(Map.empty[String, Vector[String]]) { (acc, x) =>
+    val init = Map.empty[String, Vector[String]]
+    encoded.split("&").foldLeft(init) { (acc, x) =>
       val kv = x.split("=", 2).lift
-      val result =
-        for {
-          rawK <- kv(0)
-          rawV <- kv(1)
-          k <- formDecodeString(rawK, encoding)
-          v <- formDecodeString(rawV, encoding)
-        } yield {
-          val newVal = acc.get(k) match {
-            case Some(xs) => xs :+ v
-            case None => Vector(v)
+      kv(0).filter(_.nonEmpty) match {
+        case None => acc
+        case Some(name) =>
+          val value = kv(1).flatMap(formDecodeString(_, encoding)) match {
+            case Some(v) => Vector(v)
+            case None => Vector.empty
           }
-          acc.updated(k, newVal)
-        }
-      result.getOrElse(acc)
+          val updatedValue = acc.get(name) match {
+            case Some(xs) => xs ++ value
+            case None => value
+          }
+          acc.updated(name, updatedValue)
+      }
     }
   }
 

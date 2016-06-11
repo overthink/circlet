@@ -19,11 +19,11 @@ class UtilTests extends FunSuite {
   test("form decode to a map") {
     def decode(s: String): Map[String, Vector[String]] = Util.formDecodeMap(s, UTF_8)
     assert(decode("") == Map.empty)
-    assert(decode("a") == Map.empty)
+    assert(decode("a") == Map("a" -> Vector.empty[String]))
     assert(decode("a=b") == Map("a" -> Vector("b")))
     assert(decode("a=b&c=d%2fe") == Map("a" -> Vector("b"), "c" -> Vector("d/e")))
-    assert(decode("a=b&c=%zz") == Map("a" -> Vector("b")))
-    assert(decode("a=b&c") == Map("a" -> Vector("b")))
+    assert(decode("a=b&c=%zz") == Map("a" -> Vector("b"), "c" -> Vector.empty[String]))
+    assert(decode("a=b&c") == Map("a" -> Vector("b"), "c" -> Vector.empty[String]))
     assert(decode("a=b&") == Map("a" -> Vector("b")))
     assert(Util.formDecodeMap("a=foo%FE%FF%00%2Fbar", UTF_16) == Map("a" -> Vector("foo/bar")))
   }

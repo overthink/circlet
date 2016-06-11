@@ -1,6 +1,6 @@
 package com.markfeeney.poise
 
-import com.markfeeney.poise.Route.{ParamValue, Single}
+import com.markfeeney.poise.Route.ParamValue
 import org.antlr.v4.runtime.misc.ParseCancellationException
 import org.scalatest.FunSuite
 

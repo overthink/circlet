@@ -79,4 +79,33 @@ class ParamsTest extends FunSuite {
     assert(ps.all == expectedAll)
   }
 
+  test("query string param with no value") {
+    val ps = params("/test?foo=bar&quux")
+    assert(ps.all == Map[String, Param]("foo" -> "bar", "quux" -> Vector.empty))
+    assert(ps.queryParams == ps.all)
+    assert(ps.formParams == Map.empty)
+  }
+
+  test("weird query strings") {
+    def t(ps: Params): Unit = {
+      assert(ps.all == Map.empty)
+      assert(ps.queryParams == ps.all)
+      assert(ps.formParams == Map.empty)
+    }
+    withClue("no param name or value") {
+      t(params("/test?&"))
+    }
+    withClue("empty string key, no value") {
+      t(params("/test?&="))
+      t(params("/test?=foo")) // key can't be empty string; ignored
+    }
+    withClue("mix of good and bizarre params") {
+      val ps = params("/test?&=&foo&a=b")
+      assert(ps.all == Map[String, Param]("foo" -> Vector.empty, "a" -> "b"))
+      assert(ps.queryParams == ps.all)
+      assert(ps.formParams == Map.empty)
+    }
+  }
+
+
 }

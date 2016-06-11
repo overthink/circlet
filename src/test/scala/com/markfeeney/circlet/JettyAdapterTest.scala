@@ -17,8 +17,12 @@ import org.scalatest.FunSuite
 
 class JettyAdapterTest extends FunSuite {
 
+  // Someday I'll regret changing these global logging settings here, but I'm lazy
+
   // disable logging from Jetty
   org.eclipse.jetty.util.log.Log.setLog(new NoJettyLogging)
+  // disable commons logging (unirest uses httpcomponents which uses commons logging...)
+  System.setProperty("org.apache.commons.logging.Log", "org.apache.commons.logging.impl.NoOpLog")
 
   def makeUnirestAllowSelfSignedCerts(): Unit = {
     val builder = new SSLContextBuilder
