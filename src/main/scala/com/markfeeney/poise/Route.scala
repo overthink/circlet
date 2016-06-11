@@ -9,12 +9,8 @@ import org.antlr.v4.runtime.misc.ParseCancellationException
 import org.antlr.v4.runtime.tree.ParseTreeWalker
 import org.antlr.v4.runtime.{CommonTokenStream, RecognitionException, Recognizer, BaseErrorListener, ANTLRInputStream}
 
-trait Route {
-  // e.g. "/foo/:fooId/bar/:barId"
-  def path: String
-  def paramNames: Vector[String]
-  def regex: Regex
-}
+/** Ideally you get one of these via `Route.compile()`. */
+case class Route(path: String, paramNames: Vector[String], regex: Regex)
 
 // Based on clout: https://github.com/weavejester/clout
 object Route {
@@ -31,11 +27,6 @@ object Route {
     implicit def str2Single(s: String): Single = Single(s)
     implicit def vec2Multiple(vec: Vector[String]): Multiple = Multiple(vec)
   }
-
-  case class Impl private(
-    path: String,
-    paramNames: Vector[String],
-    regex: Regex) extends Route
 
   // Why'd I think ANTLR was a good idea again? http://stackoverflow.com/a/26573239/69689
   // This thing is used to make ANTLR throw a decent exception when it runs into trouble.
@@ -104,7 +95,7 @@ object Route {
     val regex = buildRegex(parseTree)
     // println(path)
     // println(regex)
-    Impl(path, params, regex)
+    Route(path, params, regex)
   }
 
   /**
