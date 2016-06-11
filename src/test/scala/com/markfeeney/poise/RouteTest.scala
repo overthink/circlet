@@ -17,10 +17,10 @@ class RouteTest extends FunSuite {
 
   test("static routes") {
     def t(path: String) = Route.parse(Route.compile(path), path)
-    assert(t("/") == Map.empty)
-    assert(t("/foo") == Map.empty)
-    assert(t("/foo/bar") == Map.empty)
-    assert(t("/foo/bar.html") == Map.empty)
+    assert(t("/").contains(Map.empty))
+    assert(t("/foo").contains(Map.empty))
+    assert(t("/foo/bar").contains(Map.empty))
+    assert(t("/foo/bar.html").contains(Map.empty))
   }
 
   test("finding route param names") {
@@ -44,10 +44,10 @@ class RouteTest extends FunSuite {
 
   test("extracting param values") {
     def t(path: String, url: String) = Route.parse(Route.compile(path), url)
-    def m(pairs: (String, ParamValue)*): Map[String, ParamValue] = Map(pairs: _*) // allows ParamValue implicits to work below
+    def m(pairs: (String, ParamValue)*) = Some(Map(pairs: _*)) // allows ParamValue implicits to work below
 
-    assert(t("/", "/") == Map.empty)
-    assert(t("/foo", "/foo") == Map.empty)
+    assert(t("/", "/").contains(Map.empty))
+    assert(t("/foo", "/foo").contains(Map.empty))
     assert(t("/:x", "/foo") == m("x" -> "foo"))
     assert(t("/:x/:y", "/foo/bar") == m("x" -> "foo", "y" -> "bar"))
     assert(t("/:x/*/:y", "/foo/whatever/bar") == m("x" -> "foo", "*" -> "whatever", "y" -> "bar"))

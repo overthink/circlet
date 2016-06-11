@@ -91,9 +91,13 @@ object Route {
     str.r
   }
 
-  // - parse path into route AST
-  // - extract param names
-  // - generate and compile regex
+  /**
+    * Parse `path` into a Route. Throws if `path` cannot be parsed. (Based on the assumption that most
+    * of the time routes will not be built dynamically, and you'd rather just get the exception ASAP.)
+    *
+    * @param path Something like "/foo/:foo/&#42;/bar/:bar"
+    * @return A Route object that can be used to extract params from candidate URLs that match it.
+    */
   def compile(path: String): Route = {
     val parseTree = parseRoute(path)
     val params = paramNames(parseTree)
@@ -103,24 +107,25 @@ object Route {
     Impl(path, params, regex)
   }
 
-  // Use route's compiled regex to match url
-  // associate param names with whatever regex captured
-  // return as map
-  def parse(route: Route, url: String): Map[String, ParamValue] = {
-    route.regex.findFirstMatchIn(url) match {
-      case Some(m) =>
-        route.paramNames
-          .zipWithIndex
-          .map { case (param, i) => param -> m.group(i + 1) }
-          .foldLeft(Map[String, ParamValue]()) { case (acc, (k, v)) =>
-            acc.get(k) match {
-              case Some(Single(oldV)) => acc.updated(k, Vector(oldV, v))
-              case Some(Multiple(vs)) => acc.updated(k, vs :+ v)
-              case _ => acc.updated(k, v)
-            }
+  /**
+    * If possible, parse param values from `url` based on `route`.
+    *
+    * @param route A compiled Route object
+    * @param url A candidate URL like "/foo/42/blah/bar/9000"
+    * @return Map of values extracted from `url`, or None if url doesn't match route.
+    */
+  def parse(route: Route, url: String): Option[Map[String, ParamValue]] = {
+    route.regex.findFirstMatchIn(url).map { m =>
+      route.paramNames
+        .zipWithIndex
+        .map { case (param, i) => param -> m.group(i + 1) }
+        .foldLeft(Map[String, ParamValue]()) { case (acc, (k, v)) =>
+          acc.get(k) match {
+            case Some(Single(oldV)) => acc.updated(k, Vector(oldV, v))
+            case Some(Multiple(vs)) => acc.updated(k, vs :+ v)
+            case _ => acc.updated(k, v)
           }
-      case None =>
-        Map.empty
+        }
     }
   }
 
