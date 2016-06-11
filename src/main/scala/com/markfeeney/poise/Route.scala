@@ -1,4 +1,5 @@
 package com.markfeeney.poise
+/** Route matching mostly ported from clout: https://github.com/weavejester/clout */
 
 import scala.language.implicitConversions
 import scala.collection.mutable.ListBuffer
@@ -9,10 +10,14 @@ import org.antlr.v4.runtime.misc.ParseCancellationException
 import org.antlr.v4.runtime.tree.ParseTreeWalker
 import org.antlr.v4.runtime.{CommonTokenStream, RecognitionException, Recognizer, BaseErrorListener, ANTLRInputStream}
 
-/** Ideally you get one of these via `Route.compile()`. */
+/**
+ * Ideally you get one of these via `Route.compile()`.
+ * @param path e.g. "/foo/:id/bar/:name/&#42;/:quux"
+ * @param paramNames e.g., in above, Vector("id", "name", "&#42;", "quux")
+ * @param regex A regular expression to extract values from a url pased on `path` and `paramNames`.
+ */
 case class Route(path: String, paramNames: Vector[String], regex: Regex)
 
-// Based on clout: https://github.com/weavejester/clout
 object Route {
 
   sealed trait ParamValue {
@@ -79,6 +84,7 @@ object Route {
       override def enterWildcard(ctx: WildcardContext): Unit = str.append("(.*?)")
     }
     ParseTreeWalker.DEFAULT.walk(listener, parseTree)
+    str.append("$")
     str.r
   }
 

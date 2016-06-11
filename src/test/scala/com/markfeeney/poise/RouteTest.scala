@@ -48,14 +48,15 @@ class RouteTest extends FunSuite {
 
     assert(t("/", "/").contains(Map.empty))
     assert(t("/foo", "/foo").contains(Map.empty))
+    assert(t("/foo", "/bar").isEmpty)
     assert(t("/:x", "/foo") == m("x" -> "foo"))
+    assert(t("/:x", "/foo/bar").isEmpty)
     assert(t("/:x/:y", "/foo/bar") == m("x" -> "foo", "y" -> "bar"))
     assert(t("/:x/*/:y", "/foo/whatever/bar") == m("x" -> "foo", "*" -> "whatever", "y" -> "bar"))
     withClue("repeated param names") {
       assert(t("/:x/:x", "/foo/bar") == m("x" -> Vector("foo", "bar")))
       assert(t("/:x/:x/foo/:y/42", "/a/b/foo/c/42") == m("x" -> Vector("a", "b"), "y" -> "c"))
     }
-
   }
 
 }
