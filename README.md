@@ -14,10 +14,10 @@ Circlet is named after Ring in a very clever and original way.
 
 ## Project Goals
 
-(In priority order.)
+In priority order.
 
 1. Don't do too much
-1. Easy to use and understand the code
+1. Simple things are easy, fancy things are possible
 1. Composable
 1. Type safe
 1. Fast enough
