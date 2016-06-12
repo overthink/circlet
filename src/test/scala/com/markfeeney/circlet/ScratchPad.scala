@@ -15,7 +15,7 @@ object ScratchPad {
   }
 
   def cpsLazy(): Unit = {
-    val app: CpsHandler = (req, k) => {
+    val app: CpsHandler = req => k => {
       println("create expensive thing")
       val xs = 1 to 50000000
       val resp = Response(body = Some(SeqBody(xs)))
@@ -24,8 +24,8 @@ object ScratchPad {
       result
     }
 
-    val filter: CpsMiddleware = handler => (req, k) => {
-      handler(req, resp => {
+    val filter: CpsMiddleware = handler => req => k => {
+      handler(req) { resp =>
           println("filter begin")
           val newBody = resp.flatMap(_.body) match {
             case Some(SeqBody(xs)) => Some(SeqBody(xs.take(100)))
@@ -34,7 +34,7 @@ object ScratchPad {
           val result = k(resp.map(_.copy(body = newBody)))
           println("filter end")
           result
-      })
+      }
     }
 
     val opts = JettyOptions(httpPort = 8888)

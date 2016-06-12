@@ -20,12 +20,12 @@ class CpsConvertersTest extends FunSuite {
     runAsserts(h(req))
 
     val cpsH: CpsHandler = h
-    cpsH(req, resp => {
+    cpsH(req) { resp =>
       withClue("Same asserts work on resp created with CPS handler") {
         runAsserts(resp)
       }
       Sent
-    })
+    }
 
   }
 
@@ -53,7 +53,7 @@ class CpsConvertersTest extends FunSuite {
 
     withClue("same tests with CPS middleware") {
       val cpsH: CpsHandler = mw(h) // 2 layers of implicits enable this, sorry
-      cpsH(TestUtils.request(Get, "/"), {
+      cpsH(TestUtils.request(Get, "/")) {
         case None => fail("expected response")
         case Some(resp) =>
           val savedReq = resp.attrs("request").asInstanceOf[Request]
@@ -61,7 +61,7 @@ class CpsConvertersTest extends FunSuite {
           assert(savedReq.headers.get("new-req-header").contains("true"))
           assert(resp.headers.get("new-resp-header").contains(Vector("true")))
           Sent
-      })
+      }
     }
 
   }

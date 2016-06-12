@@ -152,20 +152,20 @@ object MultipartParams {
    */
   def wrapCps(
       encoding: Option[Charset] = None,
-      storage: StorageEngine = StorageEngine.TempFile): CpsMiddleware = cpsHandler => (req, k) => {
+      storage: StorageEngine = StorageEngine.TempFile): CpsMiddleware = cpsHandler => req => k => {
 
     val req0 = addMultipart(req, encoding, storage)
 
     // Remember the params we just created so we can dispose of them when request done
     val params = Params.get(req0).multipartParams.values
 
-    cpsHandler(req0, resp => {
+    cpsHandler(req0) { resp =>
       try {
         k(resp)
       } finally {
         params.foreach(storage.dispose)
       }
-    })
+    }
   }
 
   /** Non-CPS helper. See `wrapCps()`. */

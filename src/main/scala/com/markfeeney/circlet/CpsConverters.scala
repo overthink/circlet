@@ -8,16 +8,16 @@ import scala.language.implicitConversions
 object CpsConverters {
 
   implicit def handler2Cps(h: Handler): CpsHandler = {
-    (request, k) => k(h(request))
+    request => k => k(h(request))
   }
 
   implicit def cps2Handler(cpsH: CpsHandler): Handler = {
-    var resp: Option[Response] = None // yes really, much evil here
+    var resp: Option[Response] = None
     request => {
-      cpsH(request, response => {
+      cpsH(request) { response =>
         resp = response
         Sent
-      })
+      }
       resp
     }
   }

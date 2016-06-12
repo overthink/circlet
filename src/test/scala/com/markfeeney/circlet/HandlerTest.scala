@@ -26,9 +26,9 @@ class HandlerTest extends FunSuite {
   }
 
   test("fancy") {
-    val app: CpsHandler = (req, cont) => {
+    val app: CpsHandler = req => k => {
       val resp = Response(status = 200, body = "This is a body!")
-      val ret = cont(resp)
+      val ret = k(resp)
       ret
     }
 
@@ -42,12 +42,12 @@ class HandlerTest extends FunSuite {
       requestMethod = HttpMethod.Head
     )
 
-    app0(req, {
+    app0(req) {
       case None => fail("expected response")
       case Some(resp) =>
         assert(resp.status == 200)
         assert(resp.body.isEmpty)
         Sent
-    })
+    }
   }
 }
