@@ -23,6 +23,6 @@ object ContentType {
     }
   }
 
-  final def wrapCps(overrides: MimeTypes): CpsMiddleware = wrap(overrides)
+  final def wrapCps(overrides: MimeTypes = Map.empty): CpsMiddleware = wrap(overrides)
 
 }

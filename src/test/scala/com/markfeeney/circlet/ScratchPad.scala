@@ -2,6 +2,7 @@ package com.markfeeney.circlet
 
 import com.markfeeney.circlet.CpsConverters._
 import com.markfeeney.circlet.ResponseBody.SeqBody
+import com.markfeeney.circlet.middleware.{ContentType, Head, MultipartParams, Params}
 
 object ScratchPad {
 
@@ -39,9 +40,23 @@ object ScratchPad {
 
     val opts = JettyOptions(httpPort = 8888)
     JettyAdapter.run(filter(app), opts)
+  }
+
+  def mwComposition(): Unit = {
+    val mw: CpsMiddleware = ContentType.wrapCps()
+      .andThen(Head.wrapCps)
+      .andThen(Params.wrap())
+      .andThen(MultipartParams.wrapCps())
+
+    val handler: CpsHandler = req => k => k(Response(body = "Foo bar!\n"))
+
+    val app = mw(handler)
+
+    val opts = JettyOptions(httpPort = 8888)
+    JettyAdapter.run(app, opts)
 
   }
 
-  def main(args: Array[String]) = cpsLazy()
+  def main(args: Array[String]) = mwComposition()
 
 }
