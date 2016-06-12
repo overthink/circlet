@@ -13,7 +13,6 @@ class ContentTypeTest extends FunSuite {
   }
 
   test("known extension gets correct content type") {
-    println(contentType("/fluffhead.png"))
     assert(contentType("/fluffhead.png").contains(Vector("image/png")))
   }
 

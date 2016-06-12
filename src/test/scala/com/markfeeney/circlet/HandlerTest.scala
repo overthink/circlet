@@ -27,12 +27,8 @@ class HandlerTest extends FunSuite {
 
   test("fancy") {
     val app: CpsHandler = (req, cont) => {
-      println(s"got request $req")
-
-      println("acquire expensive resource")
       val resp = Response(status = 200, body = "This is a body!")
       val ret = cont(resp)
-      println("release expensive resource")
       ret
     }
 
