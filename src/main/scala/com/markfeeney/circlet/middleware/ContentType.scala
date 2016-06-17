@@ -1,8 +1,7 @@
 package com.markfeeney.circlet.middleware
 
-import com.markfeeney.circlet.CpsConverters._
-import com.markfeeney.circlet.{CpsMiddleware, Util, Middleware}
 import com.markfeeney.circlet.Util.MimeTypes
+import com.markfeeney.circlet.{CpsMiddleware, Util}
 
 /**
  * Middleware for automatically adding a content type to response objects based on the request URI.
@@ -12,17 +11,15 @@ import com.markfeeney.circlet.Util.MimeTypes
  */
 object ContentType {
 
-  def wrap(overrides: MimeTypes = Map.empty): Middleware = handler => req => {
-    handler(req).map { resp =>
-      if (resp.headers.get("Content-Type").isDefined) {
-        resp
-      } else {
-        val mimeType = Util.mimeType(req.uri, overrides).getOrElse("application/octet-stream")
-        resp.addHeader("Content-Type", mimeType)
-      }
+  def apply(overrides: MimeTypes = Map.empty): CpsMiddleware = handler => req => k => {
+    handler(req) { resp =>
+      val resp0 =
+        for {
+          r <- resp if r.contentType.isEmpty
+          mimeType = Util.mimeType(req.uri, overrides).getOrElse("application/octet-stream")
+        } yield r.setContentType(mimeType)
+      k(resp0)
     }
   }
-
-  final def wrapCps(overrides: MimeTypes = Map.empty): CpsMiddleware = wrap(overrides)
 
 }

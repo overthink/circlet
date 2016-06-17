@@ -43,7 +43,7 @@ object ScratchPad {
   }
 
   def mwComposition(): Unit = {
-    val mw: CpsMiddleware = ContentType.wrapCps()
+    val mw: CpsMiddleware = ContentType()
       .andThen(Head.wrapCps)
       .andThen(Params.wrap())
       .andThen(MultipartParams.wrapCps())

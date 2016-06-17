@@ -41,6 +41,17 @@ case class Response(
   def addHeader(name: String, value: String): Response = {
     addHeader(name, Vector(value))
   }
+
+  /** Helper to get content type since it is so commonly used. */
+  def contentType: Option[Vector[String]] = {
+    headers.get("Content-Type")
+  }
+
+  /** Helper to set content type since it is so commonly used.  Returns new Response. */
+  def setContentType(value: String): Response = {
+    addHeader("Content-Type", Vector(value))
+  }
+
 }
 
 object Response {
