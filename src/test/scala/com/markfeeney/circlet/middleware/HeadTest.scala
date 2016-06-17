@@ -3,11 +3,12 @@ package com.markfeeney.circlet.middleware
 import com.markfeeney.circlet.ResponseBody.StringBody
 import com.markfeeney.circlet.TestUtils.{hwApp, request}
 import com.markfeeney.circlet.{Handler, HttpMethod}
+import com.markfeeney.circlet.CpsConverters._
 import org.scalatest.FunSuite
 
 class HeadTest extends FunSuite {
 
-  private val wrapped: Handler = Head.wrap(hwApp)
+  private val wrapped: Handler = Head.apply(hwApp)
 
   test("something responding to GET also responds to HEAD") {
     val getResp = hwApp(request(HttpMethod.Get, "/")).get

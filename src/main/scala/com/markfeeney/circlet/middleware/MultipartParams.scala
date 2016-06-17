@@ -4,8 +4,7 @@ import java.io.{File, InputStream}
 import java.nio.charset.Charset
 import java.nio.charset.StandardCharsets._
 import java.nio.file.{Files, StandardCopyOption}
-import com.markfeeney.circlet.CpsConverters._
-import com.markfeeney.circlet.{Cleanly, CpsMiddleware, Middleware, Request}
+import com.markfeeney.circlet.{Cleanly, CpsMiddleware, Request}
 import org.apache.commons.fileupload.util.Streams
 import org.apache.commons.fileupload.{FileItemIterator, FileItemStream, FileUpload, UploadContext}
 
@@ -150,7 +149,7 @@ object MultipartParams {
    *                 encoding can be found.
    * @param storage Used to store file upload params. Default impl uses temp files on disk.
    */
-  def wrapCps(
+  def apply(
       encoding: Option[Charset] = None,
       storage: StorageEngine = StorageEngine.TempFile): CpsMiddleware = cpsHandler => req => k => {
 
@@ -166,13 +165,6 @@ object MultipartParams {
         params.foreach(storage.dispose)
       }
     }
-  }
-
-  /** Non-CPS helper. See `wrapCps()`. */
-  def wrap(
-      encoding: Option[Charset] = None,
-      storage: StorageEngine = StorageEngine.TempFile): Middleware = {
-    wrapCps(encoding, storage)
   }
 
 }

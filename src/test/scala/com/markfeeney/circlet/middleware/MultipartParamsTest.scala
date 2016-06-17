@@ -2,10 +2,10 @@ package com.markfeeney.circlet.middleware
 
 import java.io.File
 import java.nio.charset.{Charset, StandardCharsets}
+import com.markfeeney.circlet._
 import scala.collection.mutable.ListBuffer
 import scala.io.Source
 import com.markfeeney.circlet.middleware.MultipartParams.StorageEngine
-import com.markfeeney.circlet.{Handler, HttpMethod, Response, TestUtils, Util}
 import org.apache.commons.fileupload.FileItemStream
 import org.scalatest.FunSuite
 
@@ -31,7 +31,7 @@ class MultipartParamsTest extends FunSuite {
 
     val tempFiles: ListBuffer[File] = ListBuffer.empty
 
-    val h: Handler = req => {
+    val h: CpsHandler = req => k => {
       val ps = Params.get(req)
       assert(ps.multipartParams.size == 3)
       assert(ps.multipartParams.size == ps.all.size)
@@ -56,11 +56,11 @@ class MultipartParamsTest extends FunSuite {
           assert(size == 43) // note: pasting these runes into vim yields 44 bytes without `:set binary` - http://stackoverflow.com/a/16114535/69689
         case _ => fail("upload2 param should be FileParam")
       }
-      Response()
+      k(Response())
     }
 
-    val app = MultipartParams.wrap()(h)
-    app(request)
+    val app = MultipartParams()(h)
+    app(request) { _ => Sent }
 
     withClue("after request complete") {
       assert(tempFiles.nonEmpty)
@@ -75,7 +75,7 @@ class MultipartParamsTest extends FunSuite {
       .setContentType("multipart/form-data; boundary=XXXX")
       .setContentLength(body.getBytes(StandardCharsets.UTF_8).length)
 
-    val h: Handler = req => Response()
+    val h: CpsHandler = req => k => k(Response())
 
     var disposeCount = 0
     val disposedParams: ListBuffer[Param] = ListBuffer.empty
@@ -97,9 +97,9 @@ class MultipartParamsTest extends FunSuite {
       }
     }
 
-    val app = MultipartParams.wrap(storage = failingStorage)(h)
+    val app = MultipartParams(storage = failingStorage)(h)
     try {
-      app(request)
+      app(request) { _ => Sent }
       fail("should have thrown")
     } catch {
       case e: RuntimeException => // expected
@@ -109,6 +109,4 @@ class MultipartParamsTest extends FunSuite {
       assert(disposedParams.head.asInstanceOf[FileParam].filename == "test.txt")
     }
   }
-
-
 }

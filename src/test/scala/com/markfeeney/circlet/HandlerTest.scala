@@ -2,6 +2,7 @@ package com.markfeeney.circlet
 
 import com.markfeeney.circlet.middleware.Head
 import org.scalatest.FunSuite
+import com.markfeeney.circlet.CpsConverters._
 
 class HandlerTest extends FunSuite {
   test("simple") {
@@ -9,7 +10,7 @@ class HandlerTest extends FunSuite {
       Response(status = 200, body = "simple handler response")
     }
 
-    val app0 = Head.wrap(app)
+    val app0: Handler = Head(app)
 
     val req = Request(
       uri = "/test",
@@ -32,7 +33,7 @@ class HandlerTest extends FunSuite {
       ret
     }
 
-    val app0: CpsHandler = Head.wrapCps(app)
+    val app0: CpsHandler = Head(app)
 
     val req = Request(
       uri = "/test",
