@@ -11,7 +11,7 @@ import com.markfeeney.circlet.{CpsHandler, HttpMethod}
  */
 object Head {
 
-  def apply(handler: CpsHandler): CpsHandler = req => {
+  def mw(handler: CpsHandler): CpsHandler = req => {
     val req0 = req.requestMethod match {
       case HttpMethod.Head => req.copy(requestMethod = HttpMethod.Get)
       case _ => req

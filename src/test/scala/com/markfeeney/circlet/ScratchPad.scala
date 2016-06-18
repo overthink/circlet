@@ -43,10 +43,10 @@ object ScratchPad {
   }
 
   def mwComposition(): Unit = {
-    val mw: CpsMiddleware = ContentType()
-      .andThen(Head.apply)
-      .andThen(Params.wrap())
-      .andThen(MultipartParams())
+    val mw: CpsMiddleware = ContentType.mw()
+      .andThen(Head.mw)
+      .andThen(Params.mw())
+      .andThen(MultipartParams.mw())
 
     val handler: CpsHandler = req => k => k(Response(body = "Foo bar!\n"))
 

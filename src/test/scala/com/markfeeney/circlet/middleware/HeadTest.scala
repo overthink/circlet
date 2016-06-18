@@ -8,7 +8,7 @@ import org.scalatest.FunSuite
 
 class HeadTest extends FunSuite {
 
-  private val wrapped: Handler = Head.apply(hwApp)
+  private val wrapped: Handler = Head.mw(hwApp)
 
   test("something responding to GET also responds to HEAD") {
     val getResp = hwApp(request(HttpMethod.Get, "/")).get

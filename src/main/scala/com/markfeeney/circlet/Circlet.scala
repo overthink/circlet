@@ -18,4 +18,16 @@ object Circlet {
     handler(req) { optResp => k(optResp.map(f)) }
   }
 
+  /** Helper for building very simple handlers. */
+  // e.g. val app = handler { req => Response(body = "Hello world") }
+  def handler(f: Request => Response): CpsHandler = req => k => {
+    k(Some(f(req)))
+  }
+
+
+  /** Useful to force execution of a handler in test. */
+  // TODO: this is dumb, but Sent is package private so you can't test your handler without an actual
+  // server adaptor which I don't want. For now this hack.  Later, maybe just open access to Sent?
+  val mockSend: Cont = { _ => Sent }
+
 }

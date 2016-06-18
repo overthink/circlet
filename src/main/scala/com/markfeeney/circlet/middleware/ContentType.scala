@@ -11,7 +11,7 @@ import com.markfeeney.circlet.{CpsMiddleware, Util}
  */
 object ContentType {
 
-  def apply(overrides: MimeTypes = Map.empty): CpsMiddleware = handler => req => k => {
+  def mw(overrides: MimeTypes = Map.empty): CpsMiddleware = handler => req => k => {
     handler(req) { resp =>
       val resp0 =
         for {

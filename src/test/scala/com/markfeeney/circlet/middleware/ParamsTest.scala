@@ -1,6 +1,6 @@
 package com.markfeeney.circlet.middleware
 
-import com.markfeeney.circlet.{Util, Request, Handler, HttpMethod, Response, TestUtils}
+import com.markfeeney.circlet._
 import org.scalatest.FunSuite
 
 class ParamsTest extends FunSuite {
@@ -8,12 +8,12 @@ class ParamsTest extends FunSuite {
   // helper to rip Params out of Request that the app ultimately sees
   private def params(req: Request): Params = {
     var ps: Params = null
-    val h: Handler = req => {
+    val h = Circlet.handler { req =>
       ps = Params.get(req)
       Response()
     }
-    val app = Params.wrap()(h)
-    app(req)
+    val app: CpsHandler = Params.mw()(h)
+    app(req)(Circlet.mockSend)
     ps
   }
 

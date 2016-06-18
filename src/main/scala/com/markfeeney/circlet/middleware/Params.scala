@@ -2,9 +2,9 @@ package com.markfeeney.circlet.middleware
 
 import java.nio.charset.Charset
 import java.nio.charset.StandardCharsets.UTF_8
+import com.markfeeney.circlet.{CpsMiddleware, Request, Util}
 import scala.io.Source
 import scala.util.Try
-import com.markfeeney.circlet.{Util, Middleware, Request}
 
 /**
  * Parameters parsed from different parts of a Request.
@@ -95,7 +95,7 @@ object Params {
    *                 uses the request character encoding, or UTF-8 if no request
    *                 encoding can be found.
    */
-  def wrap(encoding: Option[Charset] = None): Middleware = handler => req => {
+  def mw(encoding: Option[Charset] = None): CpsMiddleware = handler => req => {
     handler(addParams(req, encoding))
   }
 }

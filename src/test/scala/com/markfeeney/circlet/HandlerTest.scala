@@ -10,7 +10,7 @@ class HandlerTest extends FunSuite {
       Response(status = 200, body = "simple handler response")
     }
 
-    val app0: Handler = Head(app)
+    val app0: Handler = Head.mw(app)
 
     val req = Request(
       uri = "/test",
@@ -33,7 +33,7 @@ class HandlerTest extends FunSuite {
       ret
     }
 
-    val app0: CpsHandler = Head(app)
+    val app0: CpsHandler = Head.mw(app)
 
     val req = Request(
       uri = "/test",

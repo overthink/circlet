@@ -7,7 +7,7 @@ import org.scalatest.FunSuite
 
 class ContentTypeTest extends FunSuite {
 
-  private val wrapped: Handler = ContentType()(hwApp)
+  private val wrapped: Handler = ContentType.mw()(hwApp)
 
   private def contentType(path: String): Option[Vector[String]] = {
     wrapped(request(HttpMethod.Get, path)).flatMap(_.contentType)

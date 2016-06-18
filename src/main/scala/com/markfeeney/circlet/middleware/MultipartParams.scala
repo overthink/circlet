@@ -149,7 +149,7 @@ object MultipartParams {
    *                 encoding can be found.
    * @param storage Used to store file upload params. Default impl uses temp files on disk.
    */
-  def apply(
+  def mw(
       encoding: Option[Charset] = None,
       storage: StorageEngine = StorageEngine.TempFile): CpsMiddleware = cpsHandler => req => k => {
 
