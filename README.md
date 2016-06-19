@@ -17,12 +17,27 @@ and file upload handling.
 
 Circlet is named after Ring in a very clever and original way.
 
+## Try it
+
+Circlet is still under heavy development and everything is subject to change.  It is however usable.
+Here's the required SBT config:
+
+```scala
+resolvers += Resolver.sonatypeRepo("snapshots")
+libraryDependencies ++= Seq(
+  "com.markfeeney" % "circlet_2.11" % "0.1.0-SNAPSHOT"
+)
+```
+
+There is also an [example circlet project](https://github.com/overthink/circlet-example) 
+showing how to get a running Circlet app.
+
 ## Project Goals
 
-In priority order.
+In priority order:
 
-1. Don't do too much
-1. Simple things are easy, fancy things are possible
+1. Don't do too much (build features _on_ circlet, not in it)
+1. Maintainable code
 1. Composable
 1. Type safe
 1. Fast enough

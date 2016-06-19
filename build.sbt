@@ -19,6 +19,7 @@ libraryDependencies ++= Seq(
 )
 
 // Stuff related to publishing to sonatype
+// Reference: http://www.loftinspace.com.au/blog/publishing-scala-libraries-to-sonatype.html
 publishMavenStyle := true
 publishTo := {
   val nexus = "https://oss.sonatype.org/"
