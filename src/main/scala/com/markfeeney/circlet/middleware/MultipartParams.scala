@@ -4,7 +4,7 @@ import java.io.{File, InputStream}
 import java.nio.charset.Charset
 import java.nio.charset.StandardCharsets._
 import java.nio.file.{Files, StandardCopyOption}
-import com.markfeeney.circlet.{Cleanly, CpsMiddleware, Request}
+import com.markfeeney.circlet.{Cleanly, Middleware, Request}
 import org.apache.commons.fileupload.util.Streams
 import org.apache.commons.fileupload.{FileItemIterator, FileItemStream, FileUpload, UploadContext}
 
@@ -151,7 +151,7 @@ object MultipartParams {
    */
   def mw(
       encoding: Option[Charset] = None,
-      storage: StorageEngine = StorageEngine.TempFile): CpsMiddleware = cpsHandler => req => k => {
+      storage: StorageEngine = StorageEngine.TempFile): Middleware = cpsHandler => req => k => {
 
     val req0 = addMultipart(req, encoding, storage)
 

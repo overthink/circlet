@@ -1,13 +1,12 @@
 package com.markfeeney.circlet
 
-import com.markfeeney.circlet.CpsConverters._
 import com.markfeeney.circlet.ResponseBody.SeqBody
 import com.markfeeney.circlet.middleware.{ContentType, Head, MultipartParams, Params}
 
 object ScratchPad {
 
   def lazySeq(): Unit = {
-    val app: Handler = request => {
+    val app: Handler = Circlet.handler { request =>
       Response(body = Some(SeqBody(1 to Int.MaxValue)))
     }
 
@@ -16,7 +15,7 @@ object ScratchPad {
   }
 
   def cpsLazy(): Unit = {
-    val app: CpsHandler = req => k => {
+    val app: Handler = req => k => {
       println("create expensive thing")
       val xs = 1 to 50000000
       val resp = Response(body = Some(SeqBody(xs)))
@@ -25,7 +24,7 @@ object ScratchPad {
       result
     }
 
-    val filter: CpsMiddleware = handler => req => k => {
+    val filter: Middleware = handler => req => k => {
       handler(req) { resp =>
           println("filter begin")
           val newBody = resp.flatMap(_.body) match {
@@ -43,12 +42,12 @@ object ScratchPad {
   }
 
   def mwComposition(): Unit = {
-    val mw: CpsMiddleware = ContentType.mw()
+    val mw: Middleware = ContentType.mw()
       .andThen(Head.mw)
       .andThen(Params.mw())
       .andThen(MultipartParams.mw())
 
-    val handler: CpsHandler = req => k => k(Response(body = "Foo bar!\n"))
+    val handler: Handler = Circlet.handler { req => Response(body = "Foo bar!\n") }
 
     val app = mw(handler)
 

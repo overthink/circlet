@@ -28,7 +28,7 @@ object TestUtils {
   /**
    * App (handler) that returns a "Hello World" body and X-Foo response header for all requests.
    */
-  val hwApp: Handler = req => {
+  val hwApp: Handler = Circlet.handler { req =>
     req.requestMethod match {
       case HttpMethod.Get =>
         // Add a header so we can be sure this code executed even if body is remmoved

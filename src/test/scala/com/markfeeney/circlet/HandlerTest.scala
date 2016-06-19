@@ -2,15 +2,14 @@ package com.markfeeney.circlet
 
 import com.markfeeney.circlet.middleware.Head
 import org.scalatest.FunSuite
-import com.markfeeney.circlet.CpsConverters._
 
 class HandlerTest extends FunSuite {
   test("simple") {
-    val app: Handler = request => {
+    val app = Circlet.handler { request =>
       Response(status = 200, body = "simple handler response")
     }
 
-    val app0: Handler = Head.mw(app)
+    val app0 = Head.mw(app)
 
     val req = Request(
       uri = "/test",
@@ -20,20 +19,20 @@ class HandlerTest extends FunSuite {
       requestMethod = HttpMethod.Head
     )
 
-    val resp = app0(req).get
+    val resp = Circlet.extractResponse(app0(req)).get
     assert(resp.status == 200)
     assert(resp.body.isEmpty)
 
   }
 
   test("fancy") {
-    val app: CpsHandler = req => k => {
+    val app: Handler = req => k => {
       val resp = Response(status = 200, body = "This is a body!")
       val ret = k(resp)
       ret
     }
 
-    val app0: CpsHandler = Head.mw(app)
+    val app0: Handler = Head.mw(app)
 
     val req = Request(
       uri = "/test",

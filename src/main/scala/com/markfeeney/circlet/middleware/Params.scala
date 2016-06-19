@@ -2,7 +2,7 @@ package com.markfeeney.circlet.middleware
 
 import java.nio.charset.Charset
 import java.nio.charset.StandardCharsets.UTF_8
-import com.markfeeney.circlet.{CpsMiddleware, Request, Util}
+import com.markfeeney.circlet.{Middleware, Request, Util}
 import scala.io.Source
 import scala.util.Try
 
@@ -79,6 +79,7 @@ object Params {
 
   /**
    * Update the params instance on req. Returns a new request.
+ *
    * @param req The request to update
    * @param params The params to add to `req`
    * @return A new request with updated Params retreiveable via `Params.get()`
@@ -95,7 +96,7 @@ object Params {
    *                 uses the request character encoding, or UTF-8 if no request
    *                 encoding can be found.
    */
-  def mw(encoding: Option[Charset] = None): CpsMiddleware = handler => req => {
+  def mw(encoding: Option[Charset] = None): Middleware = handler => req => {
     handler(addParams(req, encoding))
   }
 }

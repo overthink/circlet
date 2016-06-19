@@ -31,7 +31,7 @@ class MultipartParamsTest extends FunSuite {
 
     val tempFiles: ListBuffer[File] = ListBuffer.empty
 
-    val h: CpsHandler = req => k => {
+    val h: Handler = req => k => {
       val ps = Params.get(req)
       assert(ps.multipartParams.size == 3)
       assert(ps.multipartParams.size == ps.all.size)
@@ -75,7 +75,7 @@ class MultipartParamsTest extends FunSuite {
       .setContentType("multipart/form-data; boundary=XXXX")
       .setContentLength(body.getBytes(StandardCharsets.UTF_8).length)
 
-    val h: CpsHandler = req => k => k(Response())
+    val h: Handler = req => k => k(Response())
 
     var disposeCount = 0
     val disposedParams: ListBuffer[Param] = ListBuffer.empty

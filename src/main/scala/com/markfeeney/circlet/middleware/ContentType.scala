@@ -1,7 +1,7 @@
 package com.markfeeney.circlet.middleware
 
 import com.markfeeney.circlet.Util.MimeTypes
-import com.markfeeney.circlet.{CpsMiddleware, Util}
+import com.markfeeney.circlet.{Middleware, Util}
 
 /**
  * Middleware for automatically adding a content type to response objects based on the request URI.
@@ -11,7 +11,7 @@ import com.markfeeney.circlet.{CpsMiddleware, Util}
  */
 object ContentType {
 
-  def mw(overrides: MimeTypes = Map.empty): CpsMiddleware = handler => req => k => {
+  def mw(overrides: MimeTypes = Map.empty): Middleware = handler => req => k => {
     handler(req) { resp =>
       val resp0 =
         for {

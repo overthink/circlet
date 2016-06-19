@@ -6,7 +6,6 @@ import scala.collection.JavaConverters._
 import com.mashape.unirest.http
 import com.mashape.unirest.http.Unirest
 import com.mashape.unirest.http.exceptions.UnirestException
-import com.markfeeney.circlet.CpsConverters._
 import org.apache.http.conn.ssl.{SSLConnectionSocketFactory, TrustSelfSignedStrategy}
 import org.apache.http.impl.client.HttpClients
 import org.apache.http.ssl.SSLContextBuilder
@@ -39,7 +38,7 @@ class JettyAdapterTest extends FunSuite {
 
   private case class TestServer(server: Server, opts: JettyOptions)
 
-  private def testServer(h: CpsHandler, opts: JettyOptions)(f: TestServer => Unit): Unit = {
+  private def testServer(h: Handler, opts: JettyOptions)(f: TestServer => Unit): Unit = {
     val opts0 = opts.copy(
       join = false,
       httpPort = findFreePort,
@@ -55,7 +54,7 @@ class JettyAdapterTest extends FunSuite {
     testServer(helloWorld, opts)(f)
   }
 
-  private def helloWorld: Handler = { _ =>
+  private def helloWorld: Handler = Circlet.handler { _ =>
     Response(body = "Hello world")
   }
 

@@ -1,7 +1,7 @@
 package com.markfeeney.circlet.middleware
 
 import com.markfeeney.circlet.Circlet.modifyResponse
-import com.markfeeney.circlet.{CpsHandler, HttpMethod}
+import com.markfeeney.circlet.{Handler, HttpMethod}
 
 /**
  * Middleware to make HEAD request handling easier. Turns HEAD requests into GET requests
@@ -11,7 +11,7 @@ import com.markfeeney.circlet.{CpsHandler, HttpMethod}
  */
 object Head {
 
-  def mw(handler: CpsHandler): CpsHandler = req => {
+  def mw(handler: Handler): Handler = req => {
     val req0 = req.requestMethod match {
       case HttpMethod.Head => req.copy(requestMethod = HttpMethod.Get)
       case _ => req
