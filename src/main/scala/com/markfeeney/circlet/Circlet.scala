@@ -24,11 +24,8 @@ object Circlet {
     k(Some(f(req)))
   }
 
-
-  /** Useful to force execution of a handler in test. */
-  // TODO: this is dumb, but Sent is package private so you can't test your handler without an actual
-  // server adaptor which I don't want. For now this hack.  Later, maybe just open access to Sent?
-  val mockSend: Cont = { _ => Sent }
+  /** Defines a handler that always returns `resp`. */
+  def handler(resp: Response): Handler = handler { _ => resp }
 
   /**
    * Helper to rip response out of handler. Intended use: only in poorly designed tests,
@@ -40,7 +37,7 @@ object Circlet {
     var captured: Option[Response] = None
     f { resp =>
       captured = resp
-      mockSend(resp)
+      Sent
     }
     captured
   }

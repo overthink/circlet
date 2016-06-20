@@ -60,7 +60,7 @@ class MultipartParamsTest extends FunSuite {
     }
 
     val app = MultipartParams.mw()(h)
-    app(request)(Circlet.mockSend)
+    app(request) { _ => Sent }
 
     withClue("after request complete") {
       assert(tempFiles.nonEmpty)
@@ -99,7 +99,7 @@ class MultipartParamsTest extends FunSuite {
 
     val app = MultipartParams.mw(storage = failingStorage)(h)
     try {
-      app(request)(Circlet.mockSend)
+      app(request) { _ => Sent }
       fail("should have thrown")
     } catch {
       case e: RuntimeException => // expected

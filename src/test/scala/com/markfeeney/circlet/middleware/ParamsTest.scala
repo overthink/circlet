@@ -13,7 +13,7 @@ class ParamsTest extends FunSuite {
       Response()
     }
     val app: Handler = Params.mw()(h)
-    app(req)(Circlet.mockSend)
+    app(req) { _ => Sent }
     ps
   }
 
