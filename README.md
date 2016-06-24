@@ -19,7 +19,7 @@ Circlet is named after Ring in a very clever and original way.
 
 ## Try it
 
-Circlet is still under heavy development and everything is subject to change.  It is however usable.
+Circlet is still under heavy development and everything is subject to change.  It is, however, usable.
 Here's the required SBT config:
 
 ```scala
