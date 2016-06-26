@@ -100,3 +100,23 @@ case class Request(
   }
 
 }
+
+object Request {
+
+  /**
+   * A minimal `Request` useful for simple tests.  Will be moved to a test lib in the future.
+   */
+  // TODO: get this out of public API
+  def mock(method: HttpMethod, url: String): Request = {
+    Request(
+      serverPort = 80,
+      serverName = "example.com",
+      remoteAddr = "localhost",
+      uri = url,
+      requestMethod = method
+    )
+  }
+
+  def mock(url: String): Request = mock(HttpMethod.Get, url)
+
+}

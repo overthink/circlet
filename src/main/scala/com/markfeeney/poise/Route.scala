@@ -1,14 +1,18 @@
 package com.markfeeney.poise
 /** Route matching mostly ported from clout: https://github.com/weavejester/clout */
 
+import com.markfeeney.circlet.Request
+
 import scala.language.implicitConversions
 import scala.collection.mutable.ListBuffer
 import scala.util.matching.Regex
-import com.markfeeney.poise.parser.RouteParser.{LiteralContext, RouteContext, WildcardContext, ParamContext}
-import com.markfeeney.poise.parser.{RouteBaseListener, RouteParser, RouteLexer}
+import com.markfeeney.poise.parser.RouteParser.{LiteralContext, ParamContext, RouteContext, WildcardContext}
+import com.markfeeney.poise.parser.{RouteBaseListener, RouteLexer, RouteParser}
 import org.antlr.v4.runtime.misc.ParseCancellationException
 import org.antlr.v4.runtime.tree.ParseTreeWalker
-import org.antlr.v4.runtime.{CommonTokenStream, RecognitionException, Recognizer, BaseErrorListener, ANTLRInputStream}
+import org.antlr.v4.runtime.{ANTLRInputStream, BaseErrorListener, CommonTokenStream, RecognitionException, Recognizer}
+
+import scala.util.Try
 
 /**
  * Ideally you get one of these via `Route.compile()`.
@@ -32,6 +36,8 @@ object Route {
     implicit def str2Single(s: String): Single = Single(s)
     implicit def vec2Multiple(vec: Vector[String]): Multiple = Multiple(vec)
   }
+
+  case class Params(params: Map[String, ParamValue])
 
   // Why'd I think ANTLR was a good idea again? http://stackoverflow.com/a/26573239/69689
   // This thing is used to make ANTLR throw a decent exception when it runs into trouble.
@@ -125,5 +131,17 @@ object Route {
         }
     }
   }
+
+  /** Return parsed route params stored on `req`, if any. */
+  def get(req: Request): Option[Params] = {
+    Try(req.attrs("routeParams").asInstanceOf[Params]).toOption
+  }
+
+  /** Set `params` to be the route params on `req`. */
+  def set(req: Request, params: Params): Request = {
+    req.updated("routeParams", params)
+  }
+
+  implicit def str2Route(routeSpec: String): Route = Route.compile(routeSpec)
 
 }

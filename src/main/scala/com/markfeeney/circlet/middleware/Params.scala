@@ -73,6 +73,7 @@ object Params {
    * @param req The request to look for Params on.
    * @return The parsed Params, if any, otherwise an empty Params instance.
    */
+  // TODO: should this be Option[Params] like in (Poise's) Route.get?
   def get(req: Request): Params = {
     Try(req.attrs("params").asInstanceOf[Params]).getOrElse(Params())
   }

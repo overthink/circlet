@@ -5,11 +5,11 @@ val app = handler { req => Response(body = "Hello world!") }
 JettyAdapter.run(app)
 ```
 
-Circlet is a Scala web application library heavily inspired by Clojure's
-[Ring](https://github.com/ring-clojure/ring).  If we're truthful, it's largely a port of Ring.
-Its main feature is that it allows (forces) you to write your application as a function
-of type `Request => Response`.  It also abstracts away the details of the underlying web 
-server.
+Circlet is a Scala web application library heavily inspired by the brilliant
+[Ring](https://github.com/ring-clojure/ring) from the Clojure world.  If we're
+truthful, it's largely a port of Ring. Its main feature is that it allows
+(forces) you to write your application as a function of type `Request =>
+Response`.  It also abstracts away the details of the underlying web server.
 
 As with Ring, middleware functions are used for adding reusable bits of functionality to 
 applications. Circlet includes some useful middleware like parameter parsing, 

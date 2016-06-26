@@ -20,9 +20,7 @@ object Circlet {
 
   /** Helper for building very simple handlers. */
   // e.g. val app = handler { req => Response(body = "Hello world") }
-  def handler(f: Request => Response): Handler = req => k => {
-    k(Some(f(req)))
-  }
+  def handler(f: Request => Option[Response]): Handler = req => k => k(f(req))
 
   /** Defines a handler that always returns `resp`. */
   def handler(resp: Response): Handler = handler { _ => resp }
@@ -31,7 +29,7 @@ object Circlet {
    * Helper to rip response out of handler. Intended use: only in poorly designed tests,
    * emergencies.
    *
-   * e.g. `val response = extractResponsee(h(req)).get`
+   * e.g. `val response = extractResponse(h(req)).get`
    */
   def extractResponse(f: Cont => Sent.type): Option[Response] = {
     var captured: Option[Response] = None
