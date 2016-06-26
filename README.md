@@ -11,16 +11,16 @@ truthful, it's largely a port of Ring. Its main feature is that it allows
 (forces) you to write your application as a function of type `Request =>
 Response`.  It also abstracts away the details of the underlying web server.
 
-As with Ring, middleware functions are used for adding reusable bits of functionality to 
-applications. Circlet includes some useful middleware like parameter parsing, 
-and file upload handling.
+As with Ring, middleware functions are used for adding reusable bits of
+functionality to applications. Circlet includes some useful middleware like
+parameter parsing, and file upload handling.
 
 Circlet is named after Ring in a very clever and original way.
 
 ## Try it
 
-Circlet is still under heavy development and everything is subject to change.  It is, however, usable.
-Here's the required SBT config:
+Circlet is still under heavy development and everything is subject to change. 
+It is, however, usable. Here's the required SBT config:
 
 ```scala
 resolvers += Resolver.sonatypeRepo("snapshots")
@@ -36,7 +36,7 @@ showing how to get a running Circlet app.
 
 In priority order:
 
-1. Don't do too much (build features _on_ circlet, not in it)
+1. Don't do too much (build features _on_ Circlet, not in it)
 1. Maintainable code
 1. Composable
 1. Type safe
@@ -82,17 +82,19 @@ val helloWorld: Handler = request => {
 }
 ```
 
-This is a pain in the neck in many cases, so [helpers](src/main/scala/com/markfeeney/circlet/Circlet.scala#L23) 
-are available for cases where you don't need the extra features CPS affords. e.g.
+This is a pain in the neck in many cases, so
+[helpers](src/main/scala/com/markfeeney/circlet/Circlet.scala#L23) are
+available for cases where you don't need the extra features CPS affords. e.g.
 
 ```scala
 // simple! ... actually works
 val helloWorld = handler { req => Response(body = "hello world") }
 ```
 
-I've gone the CPS route so handlers can allocate "request scoped" resources and properly clean 
-them up when request processing is complete.  As an example, Circlet's multipart parameter 
-middleware uses this to [clean up temp files](src/main/scala/com/markfeeney/circlet/middleware/MultipartParams.scala#L163-L167) 
+I've gone the CPS route so handlers can allocate "request scoped" resources
+and properly clean them up when request processing is complete.  As an
+example, Circlet's multipart parameter middleware uses this to [clean up temp
+files](src/main/scala/com/markfeeney/circlet/middleware/MultipartParams.scala#L163-L167)
 created when handling file uploads.
 
 Here's another (contrived) example: streaming a response from the database.
@@ -109,14 +111,17 @@ val streamingHandler: Handler = req => k => {
 }
 ```
 
-This CPS approach is borrowed from Haskell's [WAI](https://hackage.haskell.org/package/wai-3.2.1/docs/Network-Wai.html)
+This CPS approach is borrowed from Haskell's
+[WAI](https://hackage.haskell.org/package/wai-3.2.1/docs/Network-Wai.html)
 (thanks [stebulus](https://github.com/stebulus)).
 
 ## Known issues
 
-* A CPS handler could call the continuation function multiple times.  I'm not sure how to prevent this, 
-  (or if I should) so don't do it.  Unless you need to.
-* CPS is nice, but in theory it can easily blow the stack since nothing really returns.  I'm hoping this
-  won't be a problem in practice since most apps won't compose more than a few tens of middleware and
-  handlers, and presumably user code running inside handlers won't use CPS.  But I'm not sure, so the whole
-  thing might be doomed :)
+* A CPS handler could call the continuation function multiple times.  I'm not
+  sure how to prevent this, (or if I should) so don't do it.  Unless you need
+  to.
+* CPS is nice, but in theory it can easily blow the stack since nothing really
+  returns.  I'm hoping this won't be a problem in practice since most apps
+  won't compose more than a few tens of middleware and handlers, and
+  presumably user code running inside handlers won't use CPS.  But I'm not
+  sure, so the whole thing might be doomed :)
