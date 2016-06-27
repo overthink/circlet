@@ -5,7 +5,7 @@ import java.nio.charset.Charset
 import java.security.cert.X509Certificate
 import java.util.Locale
 
-import com.markfeeney.circlet.HttpParse.reValue
+import com.markfeeney.circlet.HttpParse.value
 
 import scala.util.Try
 
@@ -63,7 +63,7 @@ case class Request(
     this.copy(headers = this.headers.updated(name.toLowerCase(Locale.ENGLISH), value))
   }
 
-  private val CharsetRe = (";(?:.*\\s)?(?i:charset)=(" + reValue.toString + ")\\s*(?:;|$)").r
+  private val CharsetRe = (";(?:.*\\s)?(?i:charset)=(" + value.toString + ")\\s*(?:;|$)").r
 
   /**
    * Get the Charset of the request, if any.  Looks in the Content-Type header.  Requests

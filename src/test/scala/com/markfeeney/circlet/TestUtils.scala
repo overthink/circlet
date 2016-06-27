@@ -38,4 +38,7 @@ object TestUtils {
     }
   }
 
+  /** Useful to force a handler to run. e.g. `myHandler(req)(execute)` */
+  val complete: Cont = _ => Sent
+
 }
