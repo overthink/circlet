@@ -1,11 +1,7 @@
 package com.markfeeney.circlet.middleware
 
-import java.util.Locale
-
 import com.markfeeney.circlet.HttpParse.token
-import com.markfeeney.circlet.{Middleware, Request, Util}
-import org.joda.time.DateTimeZone
-import org.joda.time.format.DateTimeFormat
+import com.markfeeney.circlet._
 
 import scala.util.Try
 import scala.util.matching.Regex
@@ -13,8 +9,17 @@ import scala.util.matching.Regex
 // from https://github.com/ring-clojure/ring/blob/91cf19b2a624cd4b8e282d23de78a56156054fc4/ring-core/src/ring/middleware/cookies.clj
 object Cookies {
 
-  // Represents Cookie request header (i.e. not relevant for Set-Cookie response header)
-  type CookieMap = Map[String, String]
+  /**
+   * Request cookies come from Cookie request header, and are just string
+   * values.
+   */
+  type RequestCookies = Map[String, String]
+
+  /**
+   * Response cookies end up as Set-Cookie response headers, and can have
+   * various attributes aside from just a string value.
+   */
+  type ResponseCookies = Map[String, Cookie]
 
   /** For decoding cookie strings from the HTTP header (after UTF-8 decoding). */
   type Decoder = String => Option[String]
@@ -32,13 +37,8 @@ object Cookies {
   // FRC6265 set-cookie-string
   private val cookie: Regex = s"\\s*($token)=($cookieValue)\\s*[;,]?".r
 
-  private val rfc822Formatter = DateTimeFormat
-    .forPattern("EEE, dd MMM yyyy HH:mm:ss Z")
-    .withZone(DateTimeZone.UTC)
-    .withLocale(Locale.US)
-
   // e.g. `Cookie: SID=31d4d96e407aad42; lang=en-US`
-  private def parseCookieHeader(header: String, decoder: Decoder): CookieMap = {
+  private def parseCookieHeader(header: String, decoder: Decoder): RequestCookies = {
     cookie
       .findAllMatchIn(header)
       .map(_.subgroups)
@@ -47,12 +47,39 @@ object Cookies {
       .toMap
   }
 
-  def get(req: Request): Option[CookieMap] = {
-    Try(req.attrs("cookies").asInstanceOf[CookieMap]).toOption
+  def get(req: Request): Option[RequestCookies] = {
+    Try(req.attrs("cookies").asInstanceOf[RequestCookies]).toOption
   }
 
-  def set(req: Request, cookies: CookieMap): Request = {
+  def set(req: Request, cookies: RequestCookies): Request = {
     req.updated("cookies", cookies)
+  }
+
+  def get(resp: Response): Option[ResponseCookies] = {
+    Try(resp.attrs("cookies").asInstanceOf[ResponseCookies]).toOption
+  }
+
+  def set(resp: Response, cookies: ResponseCookies): Response = {
+    resp.updated("cookies", cookies)
+  }
+
+  /** Helper to add a cookie to a response. */
+  def add(resp: Response, name: String, value: Cookie): Response = {
+    set(resp, get(resp).getOrElse(Map()).updated(name, value))
+  }
+
+  // make Set-Cookie headers for each Cookie found on Response
+  private def addSetCookieHeaders(resp: Response): Response = {
+    get(resp) match {
+      case None => resp
+      case Some(respCookies) =>
+        respCookies.foldLeft(resp) { case (acc, (k, v)) =>
+          Cookie.toHeaderValue(k, v) match {
+            case None => acc
+            case Some(x) => acc.addHeader("Set-Cookie", x)
+          }
+        }
+    }
   }
 
   def mw(
@@ -62,7 +89,8 @@ object Cookies {
       case Some(v) => set(req, parseCookieHeader(v, decoder))
       case None => req
     }
-    handler(req0)(k)
+    Circlet.modifyResponse(addSetCookieHeaders)(handler)(req0)(k)
   }
 
 }
+

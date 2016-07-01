@@ -32,14 +32,26 @@ case class Response(
   }
 
   /**
-   * Add a response header to this Response.  Returns a new Response.
+   * Set a response header to this Response.  Replaces any old value for
+   * header.  Returns a new Response.
    */
-  def addHeader(name: String, value: Vector[String]): Response = {
+  def setHeader(name: String, value: Vector[String]): Response = {
     this.copy(headers = this.headers.updated(name, value))
   }
 
+  def setHeader(name: String, value: String): Response = {
+    setHeader(name, Vector(value))
+  }
+
+  /**
+   * Add a new value for header `name`. Existing values are preserved.
+   */
   def addHeader(name: String, value: String): Response = {
-    addHeader(name, Vector(value))
+    val newHeaders = headers.get(name) match {
+      case Some(xs) => headers.updated(name, xs :+ value)
+      case _ => headers.updated(name, Vector(value))
+    }
+    this.copy(headers = newHeaders)
   }
 
   /** Helper to get content type since it is so commonly used. */
@@ -49,7 +61,7 @@ case class Response(
 
   /** Helper to set content type since it is so commonly used.  Returns new Response. */
   def setContentType(value: String): Response = {
-    addHeader("Content-Type", Vector(value))
+    setHeader("Content-Type", Vector(value))
   }
 
 }
