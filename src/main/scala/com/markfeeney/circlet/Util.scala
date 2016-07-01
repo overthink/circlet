@@ -1,9 +1,10 @@
 package com.markfeeney.circlet
 
 import java.io.{ByteArrayInputStream, InputStream}
-import java.net.URLDecoder
+import java.net.{URLDecoder, URLEncoder}
 import java.nio.charset.Charset
 import java.nio.charset.StandardCharsets.UTF_8
+
 import scala.util.Try
 
 /**
@@ -130,6 +131,15 @@ object Util {
   }
 
   /**
+   * Convert s to www-form-urlencoded format if possible.
+   */
+  def formEncodeString(s: String, encoding: Charset): Option[String] = {
+    Try(URLEncoder.encode(s, encoding.toString)).toOption
+  }
+
+  def formEncodeString(s: String): Option[String] = formEncodeString(s, UTF_8)
+
+  /**
    * Decode a www-form-urlencoded string, if possible.
    *
    * The primary way a string cannot be
@@ -143,6 +153,8 @@ object Util {
     Try(URLDecoder.decode(encoded, encoding.toString)).toOption
   }
 
+  def formDecodeString(encoded: String): Option[String] = formDecodeString(encoded, UTF_8)
+
   /**
    * Decode a www-form-urlencoded string to a Map. Useful for decoding form bodies and query strings.
    *
@@ -155,7 +167,7 @@ object Util {
    *        values.  The typical case `a=b&c=d` decodes values as single element Vectors.
    *        Portions of `encoded` that can't be decoded into a map will be discarded.
    */
-  def formDecodeMap(encoded: String, encoding: Charset): Map[String, Vector[String]] = {
+  def formDecodeMap(encoded: String, encoding: Charset = UTF_8): Map[String, Vector[String]] = {
     val init = Map.empty[String, Vector[String]]
     encoded.split("&").foldLeft(init) { (acc, x) =>
       val kv = x.split("=", 2).lift

@@ -63,6 +63,13 @@ case class Request(
     this.copy(headers = this.headers.updated(name.toLowerCase(Locale.ENGLISH), value))
   }
 
+  /**
+   * Helper to get a header from the request.
+   */
+  def getHeader(name: String): Option[String] = {
+    headers.get(name.toLowerCase)
+  }
+
   private val CharsetRe = (";(?:.*\\s)?(?i:charset)=(" + value.toString + ")\\s*(?:;|$)").r
 
   /**

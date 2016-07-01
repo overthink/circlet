@@ -9,12 +9,12 @@ import scala.util.matching.Regex
 object HttpParse {
 
   // HTTP token: 1*<any CHAR except CTLs or tspecials>. See RFC2068
-  val token: Regex = "[!#$%&'*\\-+.0-9A-Z\\^_`a-z\\|~]+".r
+  val token = "[!#$%&'*\\-+.0-9A-Z\\^_`a-z\\|~]+"
 
   // HTTP quoted-string: <"> *<any TEXT except "> <">. See RFC2068.
-  val quoted: Regex = "\"(\\\"|[^\"])*\"".r
+  private val quoted = "\"(\\\"|[^\"])*\""
 
   // HTTP value: token | quoted-string. See RFC2109
-  val value: Regex = (token.toString + "|" + quoted.toString).r
+  val value: Regex = (token + "|" + quoted).r
 
 }
