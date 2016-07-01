@@ -1,5 +1,7 @@
 # Circlet
 
+[![Build Status](https://travis-ci.org/overthink/circlet.svg?branch=master)](https://travis-ci.org/overthink/circlet)
+
 ```scala
 val app = handler { req => Response(body = "Hello world!") }
 JettyAdapter.run(app)
@@ -16,8 +18,6 @@ functionality to applications. Circlet includes some useful middleware like
 parameter parsing, and file upload handling.
 
 Circlet is named after Ring in a very clever and original way.
-
-[![Build Status](https://travis-ci.org/overthink/circlet.svg?branch=master)](https://travis-ci.org/overthink/circlet)
 
 ## Try it
 
