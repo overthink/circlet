@@ -17,6 +17,8 @@ parameter parsing, and file upload handling.
 
 Circlet is named after Ring in a very clever and original way.
 
+[![Build Status](https://travis-ci.org/overthink/circlet.svg?branch=master)](https://travis-ci.org/overthink/circlet)
+
 ## Try it
 
 Circlet is still under heavy development and everything is subject to change. 
