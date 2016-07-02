@@ -16,8 +16,7 @@ libraryDependencies ++= Seq(
   "joda-time" % "joda-time" % "2.9.4",
   "org.joda" % "joda-convert" % "1.8.1",
   "org.scalatest" % "scalatest_2.11" % "2.2.6" % "test",
-  "com.mashape.unirest" % "unirest-java" % "1.4.9" % "test",
-  "org.antlr" % "antlr4-runtime" % "4.5.3" // route parser needs this; later move to own project
+  "com.mashape.unirest" % "unirest-java" % "1.4.9" % "test"
 )
 
 // Stuff related to publishing to sonatype
@@ -46,6 +45,3 @@ pomExtra := (
       <url>http://proofbyexample.com</url>
     </developer>
   </developers>)
-
-antlr4Settings
-antlr4PackageName in Antlr4 := Some("com.markfeeney.poise.parser")

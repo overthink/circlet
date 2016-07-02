@@ -15,9 +15,7 @@ Response`.  It also abstracts away the details of the underlying web server.
 
 As with Ring, middleware functions are used for adding reusable bits of
 functionality to applications. Circlet includes some useful middleware like
-parameter parsing, and file upload handling.
-
-Circlet is named after Ring in a very clever and original way.
+parameter parsing, and cookie handling.
 
 ## Try it
 
@@ -127,3 +125,9 @@ This CPS approach is borrowed from Haskell's
   won't compose more than a few tens of middleware and handlers, and
   presumably user code running inside handlers won't use CPS.  But I'm not
   sure, so the whole thing might be doomed :)
+
+## License                                                                                                                                                                            
+                                                                                                                                                                                      
+Copyright &copy; 2016 Mark Feeney
+                                                                                                                                                     
+Released under the MIT license.
