@@ -38,7 +38,7 @@ showing how to get a running Circlet app.
 
 In priority order:
 
-1. Don't do too much (build features _on_ Circlet, not in it)
+1. Don't do too much
 1. Maintainable code
 1. Composable
 1. Type safe
@@ -50,9 +50,9 @@ To get to a somewhat useful v1, I think I need the following done:
 
 * Middleware
   * ~~regular params (query string, post body)~~
-  * cookies
+  * ~~cookies~~
   * ~~multipart params (i.e. file upload)~~
-  * sessions
+  * ~~sessions~~ (deferred)
   * serve static resources/files
 
 ## Design
