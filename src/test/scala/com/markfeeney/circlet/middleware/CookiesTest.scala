@@ -2,7 +2,7 @@ package com.markfeeney.circlet.middleware
 
 import com.markfeeney.circlet.Circlet.handler
 import com.markfeeney.circlet.TestUtils.complete
-import com.markfeeney.circlet.middleware.Cookies.{Decoder, RequestCookies}
+import com.markfeeney.circlet.middleware.Cookies.{Decoder, Encoder, RequestCookies, ResponseCookies}
 import com.markfeeney.circlet.{Circlet, Request, Response, Util}
 import org.joda.time.{DateTime, Period}
 import org.scalatest.FunSuite
@@ -77,31 +77,37 @@ class CookiesTest extends FunSuite {
     assert(t("a=%z;b=9000") == Map("b" -> "9000"))
   }
 
-  private def getSetCookiesHeaders(cookies: (String, Cookie)*): Option[Vector[String]] = {
-    val h = handler(Cookies.set(Response(), cookies.toMap))
-    val resp = Circlet.extractResponse(Cookies.mw()(h)(Request.mock("/"))).get
+  private def getSetCookiesHeaders(
+      cookies: ResponseCookies,
+      encoder: Encoder): Option[Vector[String]] = {
+    val h = handler(Cookies.set(Response(), cookies))
+    val resp = Circlet.extractResponse(Cookies.mw(encoder = encoder)(h)(Request.mock("/"))).get
     resp.headers.get("Set-Cookie")
   }
 
-  private def t2(cookies: (String, Cookie)*): Option[Vector[String]] = getSetCookiesHeaders(cookies: _*)
+  private def t2(
+      cookies: ResponseCookies,
+      encoder: Encoder = Util.formEncodeString): Option[Vector[String]] = {
+    getSetCookiesHeaders(cookies, encoder)
+  }
 
   test("no cookies set on response, no Set-Cookie") {
-    assert(t2().isEmpty)
+    assert(t2(Map.empty).isEmpty)
   }
 
   test("empty cookie name, no Set-Cookie") {
-    assert(t2("" -> "foo", " " -> "bar").isEmpty)
+    assert(t2(Map("" -> "foo", " " -> "bar")).isEmpty)
   }
 
   test("can set simple cookies") {
-    assert(t2("foo" -> "bar").get == Vector("foo=bar"))
-    assert(t2("foo" -> "bar", "baz" -> "42").get == Vector("foo=bar", "baz=42"))
+    assert(t2(Map("foo" -> "bar")).get == Vector("foo=bar"))
+    assert(t2(Map("foo" -> "bar", "baz" -> "42")).get == Vector("foo=bar", "baz=42"))
   }
 
   test("set cookies with expiry") {
     val dt = new DateTime("2100-01-01T00:00:00Z")
     val c = Cookie(value = "bar", expires = Some(dt))
-    assert(t2("foo" -> c).get == Vector("foo=bar; Expires=Fri, 01 Jan 2100 00:00:00 +0000"))
+    assert(t2(Map("foo" -> c)).get == Vector("foo=bar; Expires=Fri, 01 Jan 2100 00:00:00 +0000"))
   }
 
   test("set cookie with all attrs (even if nonsense)") {
@@ -114,7 +120,18 @@ class CookiesTest extends FunSuite {
       path = Some("/foo/bar"),
       secure = true,
       httpOnly = true)
-    assert(t2("foo" -> c).get == Vector("foo=bar; Expires=Fri, 01 Jan 2100 00:00:00 +0000; Max-Age=14400; Domain=example.com; Path=/foo/bar; Secure; HttpOnly"))
+    val expected = Vector("foo=bar; Expires=Fri, 01 Jan 2100 00:00:00 +0000; Max-Age=14400; Domain=example.com; Path=/foo/bar; Secure; HttpOnly")
+    assert(t2(Map("foo" -> c)).get == expected)
+  }
+
+  test("set cookies are urlencoded by default") {
+    val actual = t2(Map("a" -> "hello world", "b" -> "foo/bar")).get
+    assert(actual == Vector("a=hello+world", "b=foo%2Fbar"))
+  }
+
+  test("alternate cookie value encoder works") {
+    val actual = t2(Map("a" -> "hello world", "b" -> "foo/bar"), Some.apply).get
+    assert(actual == Vector("a=hello world", "b=foo/bar"))
   }
 
 }

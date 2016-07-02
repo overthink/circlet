@@ -2,6 +2,7 @@ package com.markfeeney.circlet.middleware
 
 import java.util.Locale
 
+import com.markfeeney.circlet.middleware.Cookies.Encoder
 import org.joda.time.format.DateTimeFormat
 import org.joda.time.{DateTime, DateTimeZone, Duration}
 
@@ -41,12 +42,12 @@ object Cookie {
   /**
    * Format `cookie` with given `name` for use in Set-Cookie header.
    */
-  def toHeaderValue(name: String, cookie: Cookie): Option[String] = {
+  def toHeaderValue(name: String, cookie: Cookie, valueEncoder: Encoder): Option[String] = {
     if (name.trim.isEmpty) {
       None
     } else {
       val parts = new ListBuffer[String]
-      parts.append(s"$name=${cookie.value}")
+      parts.append(s"$name=${valueEncoder(cookie.value).getOrElse("")}")
       cookie.expires.foreach { v => parts.append(s"Expires=${rfc822Formatter.print(v)}") }
       cookie.maxAge.foreach { v => parts.append(s"Max-Age=${v.getStandardSeconds}") }
       cookie.domain.foreach { v => parts.append(s"Domain=$v") }

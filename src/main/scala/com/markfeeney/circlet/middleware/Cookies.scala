@@ -73,12 +73,12 @@ object Cookies {
   }
 
   // make Set-Cookie headers for each Cookie found on Response
-  private def addSetCookieHeaders(resp: Response): Response = {
+  private def addSetCookieHeaders(encoder: Encoder)(resp: Response): Response = {
     get(resp) match {
       case None => resp
       case Some(respCookies) =>
         respCookies.foldLeft(resp) { case (acc, (k, v)) =>
-          Cookie.toHeaderValue(k, v) match {
+          Cookie.toHeaderValue(k, v, encoder) match {
             case None => acc
             case Some(x) => acc.addHeader("Set-Cookie", x)
           }
@@ -93,7 +93,7 @@ object Cookies {
       case Some(v) => set(req, parseCookieHeader(v, decoder))
       case None => req
     }
-    Circlet.modifyResponse(addSetCookieHeaders)(handler)(req0)(k)
+    Circlet.modifyResponse(addSetCookieHeaders(encoder))(handler)(req0)(k)
   }
 
 }
