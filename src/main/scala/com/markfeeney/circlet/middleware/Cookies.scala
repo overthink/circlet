@@ -51,6 +51,10 @@ object Cookies {
     Try(req.attrs("cookies").asInstanceOf[RequestCookies]).toOption
   }
 
+  def get(req: Request, name: String): Option[String] = {
+    get(req).flatMap(_.get(name))
+  }
+
   def set(req: Request, cookies: RequestCookies): Request = {
     req.updated("cookies", cookies)
   }
