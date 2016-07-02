@@ -1,6 +1,7 @@
 package com.markfeeney.circlet
 
 import com.markfeeney.circlet.ResponseBody.SeqBody
+import com.markfeeney.circlet.Circlet.handler
 import com.markfeeney.circlet.middleware._
 import org.joda.time.Duration
 
@@ -50,7 +51,7 @@ object ScratchPad {
       .andThen(MultipartParams.mw())
       .andThen(Cookies.mw())
 
-    val handler: Handler = Circlet.handler { req =>
+    val h: Handler = handler { req =>
       Cookies.get(req, "id") match {
         case None =>
           val id = Random.nextInt(1000000)
@@ -62,7 +63,7 @@ object ScratchPad {
       }
     }
 
-    val app = mw(handler)
+    val app = mw(h)
 
     sys.addShutdownHook(println("in shutdown hook"))
 
@@ -70,6 +71,10 @@ object ScratchPad {
     JettyAdapter.run(app, opts)
   }
 
-  def main(args: Array[String]) = mwComposition()
+  def trivial(): Unit = {
+    JettyAdapter.run(handler(Response(body = "yo")), JettyOptions(httpPort = 8888))
+  }
+
+  def main(args: Array[String]) = trivial()
 
 }
