@@ -1,9 +1,10 @@
 package com.markfeeney.circlet
 
 import java.io.InputStream
-import java.nio.charset.Charset
+import java.net.URI
+import java.nio.charset.{Charset, StandardCharsets}
 import java.security.cert.X509Certificate
-import java.util.Locale
+import java.util.{Locale, Scanner}
 
 import com.markfeeney.circlet.HttpParse.value
 
@@ -39,7 +40,22 @@ case class Request(
   body: Option[InputStream] = None,
   attrs: Map[String, AnyRef] = Map.empty) {
 
-  require(uri.startsWith("/"))
+  require(!new URI(uri).isAbsolute, "Absolute URLs not supported")
+
+  /**
+   * Helper to convert body into a String. Beware using it on huge bodies.
+   */
+  def bodyString(encoding: Charset = StandardCharsets.UTF_8): Option[String] = {
+    this.body.flatMap { is =>
+      Cleanly(new Scanner(is, encoding.toString).useDelimiter("\\A"))(_.close) { s =>
+        if (s.hasNext()) {
+          s.next()
+        } else {
+          ""
+        }
+      }.right.toOption
+    }
+  }
 
   /**
    * Helper for easily adding things to the attrs map.
