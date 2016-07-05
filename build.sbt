@@ -1,5 +1,5 @@
 name := "circlet"
-version := "0.1.0"
+version := "0.2.0-SNAPSHOT"
 organization := "com.markfeeney"
 scalaVersion := "2.11.8"
 scalacOptions ++= Seq(
@@ -21,6 +21,7 @@ libraryDependencies ++= Seq(
 
 // Stuff related to publishing to sonatype
 // Reference: http://www.loftinspace.com.au/blog/publishing-scala-libraries-to-sonatype.html
+// Also useful: http://central.sonatype.org/pages/releasing-the-deployment.html
 publishMavenStyle := true
 publishTo := {
   val nexus = "https://oss.sonatype.org/"
