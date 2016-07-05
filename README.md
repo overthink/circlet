@@ -44,8 +44,6 @@ In priority order:
 
 ## TODO
 
-To get to a somewhat useful v1, I think I need the following done:
-
 * Middleware
   * ~~regular params (query string, post body)~~
   * ~~cookies~~
