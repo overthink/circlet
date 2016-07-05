@@ -52,6 +52,8 @@ To get to a somewhat useful v1, I think I need the following done:
   * ~~multipart params (i.e. file upload)~~
   * ~~sessions~~ (deferred)
   * serve static resources/files
+* Async handlers
+* Actual adapter abstraction (right now only `JettyAdapter` and `JettyOptions` exist)
 
 ## Design
 

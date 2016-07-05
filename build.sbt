@@ -1,5 +1,5 @@
 name := "circlet"
-version := "0.1.0-SNAPSHOT"
+version := "0.1.0"
 organization := "com.markfeeney"
 scalaVersion := "2.11.8"
 scalacOptions ++= Seq(
@@ -11,7 +11,7 @@ scalacOptions ++= Seq(
   "-Ywarn-unused-import"
 )
 libraryDependencies ++= Seq(
-  "org.eclipse.jetty" % "jetty-server" % "9.2.16.v20160414", // 9.3 needs Java 8, so stick with 9.2 for now
+  "org.eclipse.jetty" % "jetty-server" % "9.2.17.v20160517", // 9.3 needs Java 8, so stick with 9.2 for now
   "commons-fileupload" % "commons-fileupload" % "1.3.1",
   "joda-time" % "joda-time" % "2.9.4",
   "org.joda" % "joda-convert" % "1.8.1",
