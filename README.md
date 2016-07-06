@@ -8,24 +8,35 @@ JettyAdapter.run(app)
 ```
 
 Circlet is a Scala web application library heavily inspired by the brilliant
-[Ring](https://github.com/ring-clojure/ring) from the Clojure world.  If we're
-truthful, it's largely a port of Ring. Its main feature is that it allows
-(forces) you to write your application as a function of type `Request =>
-Response`.  It also abstracts away the details of the underlying web server.
+[Ring](https://github.com/ring-clojure/ring) from the Clojure world.  Large
+parts of Circlet are directly ported from Ring.
+
+Circlet's main feature is that it allows (forces) you to write your
+application as a function of type `Request => Response`.  It also abstracts
+away the details of the underlying web server, though presently only Jetty is
+supported.
 
 As with Ring, middleware functions are used for adding reusable bits of
 functionality to applications. Circlet includes some useful middleware like
-parameter parsing, and cookie handling.
+parameter parsing (including multipart), and cookie handling.  For routing and
+higher-level functionality, see [Usher](https://github.com/overhink/usher).
 
 ## Try it
 
-Circlet is still under heavy development and everything is subject to change. 
-It is, however, usable. Here's the required SBT config:
+Latest release:
 
 ```scala
-resolvers += Resolver.sonatypeRepo("snapshots")
 libraryDependencies ++= Seq(
-  "com.markfeeney" % "circlet_2.11" % "0.1.0-SNAPSHOT"
+  "com.markfeeney" % "circlet_2.11" % "0.1.0"
+)
+```
+
+Next version snapshots:
+
+```scala
+resolvers += Opts.resolver.sonatypeSnapshots
+libraryDependencies ++= Seq(
+  "com.markfeeney" % "circlet_2.11" % "0.2.0-SNAPSHOT"
 )
 ```
 
@@ -36,22 +47,11 @@ showing how to get a running Circlet app.
 
 In priority order:
 
-1. Don't do too much
-1. Maintainable code
+1. Lightweight, small surface area
 1. Composable
+1. Maintainable code
 1. Type safe
 1. Fast enough
-
-## TODO
-
-* Middleware
-  * ~~regular params (query string, post body)~~
-  * ~~cookies~~
-  * ~~multipart params (i.e. file upload)~~
-  * ~~sessions~~ (deferred)
-  * serve static resources/files
-* Async handlers
-* Actual adapter abstraction (right now only `JettyAdapter` and `JettyOptions` exist)
 
 ## Design
 
@@ -76,7 +76,7 @@ val cpsHelloWorld: Handler = request => k => {
 instead of something like this:
 
 ```scala
-// simple! ... but doesn't compile
+// unfortunately doesn't compile
 val helloWorld: Handler = request => {
   Response(body = "hello world")
 }
@@ -87,7 +87,6 @@ This is a pain in the neck in many cases, so
 available for cases where you don't need the extra features CPS affords. e.g.
 
 ```scala
-// simple! ... actually works
 val helloWorld = handler { req => Response(body = "hello world") }
 ```
 
@@ -114,6 +113,17 @@ val streamingHandler: Handler = req => k => {
 This CPS approach is borrowed from Haskell's
 [WAI](https://hackage.haskell.org/package/wai-3.2.1/docs/Network-Wai.html)
 (thanks [stebulus](https://github.com/stebulus)).
+
+## TODO
+
+* Middleware
+  * ~~regular params (query string, post body)~~
+  * ~~cookies~~
+  * ~~multipart params (i.e. file upload)~~
+  * ~~sessions~~ (deferred)
+  * serve static resources/files
+* Async handlers
+* Actual adapter abstraction (right now only `JettyAdapter` and `JettyOptions` exist)
 
 ## Known issues
 
