@@ -19,7 +19,7 @@ supported.
 As with Ring, middleware functions are used for adding reusable bits of
 functionality to applications. Circlet includes some useful middleware like
 parameter parsing (including multipart), and cookie handling.  For routing and
-higher-level functionality, see [Usher](https://github.com/overhink/usher).
+higher-level functionality, see [Usher](https://github.com/overthink/usher).
 
 ## Try it
 
