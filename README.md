@@ -3,41 +3,35 @@
 [![Build Status](https://travis-ci.org/overthink/circlet.svg?branch=master)](https://travis-ci.org/overthink/circlet)
 
 ```scala
+import com.markfeeney.circlet.Circlet.handler
+import com.markfeeney.circlet.{JettyAdapter, Response}
+
 val app = handler { req => Response(body = "Hello world!") }
 JettyAdapter.run(app)
 ```
 
-Circlet is a Scala web application library heavily inspired by the brilliant
-[Ring](https://github.com/ring-clojure/ring) from the Clojure world.  Large
-parts of Circlet are directly ported from Ring.
+Circlet is a simple Scala web application library.  Circlet abstracts away the
+underlying web server and allows you to write your application as a plain function
+of type `Request => Option[Response]` (also called a `Handler`).
 
-Circlet's main feature is that it allows (forces) you to write your
-application as a function of type `Request => Response`.  It also abstracts
-away the details of the underlying web server, though presently only Jetty is
-supported.
+Composable middleware functions of type `Handler => Handler` are used to add
+reusable functionality to handlers.  Circlet includes some useful middleware
+like parameter parsing (including multipart, i.e. file upload), and cookie
+handling. For routing and higher-level functionality, see
+[Usher](https://github.com/overthink/usher).
 
-As with Ring, middleware functions are used for adding reusable bits of
-functionality to applications. Circlet includes some useful middleware like
-parameter parsing (including multipart), and cookie handling.  For routing and
-higher-level functionality, see [Usher](https://github.com/overthink/usher).
+Circlet aims to be in roughly the same space as other web server interfaces
+like [WSGI](https://wsgi.readthedocs.io/en/latest/),
+[Rack](http://rack.github.io/), [WAI](https://github.com/yesodweb/wai), and
+[Ring](https://github.com/ring-clojure/ring).  In fact, Ring is the inspiration for
+Circlet, and large parts of Circlet are ported directly from Ring.
 
 ## Try it
 
 Latest release:
 
 ```scala
-libraryDependencies ++= Seq(
-  "com.markfeeney" % "circlet_2.11" % "0.1.0"
-)
-```
-
-Next version snapshots:
-
-```scala
-resolvers += Opts.resolver.sonatypeSnapshots
-libraryDependencies ++= Seq(
-  "com.markfeeney" % "circlet_2.11" % "0.2.0-SNAPSHOT"
-)
+libraryDependencies += "com.markfeeney" % "circlet_2.11" % "0.1.0"
 ```
 
 There is also an [example circlet project](https://github.com/overthink/circlet-example) 
@@ -47,7 +41,7 @@ showing how to get a running Circlet app.
 
 In priority order:
 
-1. Lightweight, small surface area
+1. Small: few core classes, no special tooling required
 1. Composable
 1. Maintainable code
 1. Type safe
@@ -64,9 +58,10 @@ type Handler = Request => Cont => Sent.type
 type Middleware = Handler => Handler
 ```
 
-e.g. So you need to write this:
+i.e. you need to write this:
 
 ```scala
+// k is the continuation fn
 val cpsHelloWorld: Handler = request => k => {
   val resp = Response(body = "hello world")
   k(resp)
@@ -76,13 +71,13 @@ val cpsHelloWorld: Handler = request => k => {
 instead of something like this:
 
 ```scala
-// unfortunately doesn't compile
+// doesn't compile
 val helloWorld: Handler = request => {
   Response(body = "hello world")
 }
 ```
 
-This is a pain in the neck in many cases, so
+Worrying about the continuation can be a pain in the neck sometimes, so
 [helpers](src/main/scala/com/markfeeney/circlet/Circlet.scala#L23) are
 available for cases where you don't need the extra features CPS affords. e.g.
 
@@ -110,31 +105,27 @@ val streamingHandler: Handler = req => k => {
 }
 ```
 
-This CPS approach is borrowed from Haskell's
+Circlet's CPS approach is borrowed from
 [WAI](https://hackage.haskell.org/package/wai-3.2.1/docs/Network-Wai.html)
 (thanks [stebulus](https://github.com/stebulus)).
 
 ## TODO
 
+* Async handlers
 * Middleware
   * ~~regular params (query string, post body)~~
   * ~~cookies~~
   * ~~multipart params (i.e. file upload)~~
   * ~~sessions~~ (deferred)
   * serve static resources/files
-* Async handlers
-* Actual adapter abstraction (right now only `JettyAdapter` and `JettyOptions` exist)
+* Separate Jetty-specific bits into separate project
+* Support other web servers besides Jetty
 
 ## Known issues
 
 * A CPS handler could call the continuation function multiple times.  I'm not
   sure how to prevent this, (or if I should) so don't do it.  Unless you need
   to.
-* CPS is nice, but in theory it can easily blow the stack since nothing really
-  returns.  I'm hoping this won't be a problem in practice since most apps
-  won't compose more than a few tens of middleware and handlers, and
-  presumably user code running inside handlers won't use CPS.  But I'm not
-  sure, so the whole thing might be doomed :)
 
 ## License                                                                                                                                                                            
                                                                                                                                                                                       
