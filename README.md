@@ -24,7 +24,7 @@ Circlet aims to be in roughly the same space as other web server interfaces
 like [WSGI](https://wsgi.readthedocs.io/en/latest/),
 [Rack](http://rack.github.io/), [WAI](https://github.com/yesodweb/wai), and
 [Ring](https://github.com/ring-clojure/ring).  In fact, Ring is the inspiration for
-Circlet, and large parts of Circlet are ported directly from Ring.
+Circlet, and large parts of Circlet are ported directly from it.
 
 ## Try it
 
@@ -61,10 +61,10 @@ type Middleware = Handler => Handler
 i.e. you need to write this:
 
 ```scala
-// k is the continuation fn
-val cpsHelloWorld: Handler = request => k => {
+// respond is the continuation fn
+val cpsHelloWorld: Handler = request => respond => {
   val resp = Response(body = "hello world")
-  k(resp)
+  respond(resp)
 }
 ```
 
@@ -94,11 +94,11 @@ created when handling file uploads.
 Here's another (contrived) example: streaming a response from the database.
 
 ```scala
-val streamingHandler: Handler = req => k => {
+val streamingHandler: Handler = req => respond => {
   val conn = // get a db connection
   try {
     val resp = Response(body = SeqBody(makeLazySeq(req, conn)))
-    k(resp)
+    respond(resp)
   } finally {
     conn.close() // response has been sent, close connection
   }
