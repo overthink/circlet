@@ -1,7 +1,7 @@
 package com.markfeeney.circlet
 
-import com.markfeeney.circlet.ResponseBody.SeqBody
 import com.markfeeney.circlet.Circlet.handler
+import com.markfeeney.circlet.ResponseBody.SeqBody
 import com.markfeeney.circlet.middleware._
 import org.joda.time.Duration
 
@@ -75,6 +75,32 @@ object ScratchPad {
     JettyAdapter.run(handler(Response(body = "yo")), JettyOptions(httpPort = 8888))
   }
 
-  def main(args: Array[String]) = trivial()
+  def async(): Unit = {
+//    implicit val ec = ExecutionContext.fromExecutor(Executors.newCachedThreadPool())
+//    val h = handler { req =>
+//      val f: Future[StringBody] = Future {
+//        val t = Thread.currentThread().getName
+//        println(s"$t - going to sleep")
+//        Thread.sleep(5000)
+//        StringBody(s"$t waited 10s")
+//      }
+//      Response(body = f)
+//    }
+
+    val h = handler { req =>
+      val t = Thread.currentThread().getName
+      println(s"$t - ${req.uri} - going to sleep")
+      Thread.sleep(5000)
+      val s = s"$t - ${req.uri} - waited 5s"
+      println(s)
+      Response(body = s)
+    }
+
+    val reqThreads = 1
+    val opts = JettyOptions(maxThreads = 5 + reqThreads, minThreads = 6, async = true, httpPort = 8888)
+    JettyAdapter.run(h, opts)
+  }
+
+  def main(args: Array[String]) = async()
 
 }

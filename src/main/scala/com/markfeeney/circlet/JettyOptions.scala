@@ -34,6 +34,7 @@ import org.eclipse.jetty.server.Server
  * @param clientAuth Policy for client SSL authentication (i.e. Need/Want).
  * @param excludeCiphers Cipher suites to exclude when using SSL
  * @param excludeProtocols Protocols to exclude when using SSL
+ * @param async If true, consider the handler to be asynchronous.
  */
 case class JettyOptions(
   join: Boolean = true,
@@ -58,7 +59,8 @@ case class JettyOptions(
   trustStorePassword: Option[String] = None,
   clientAuth: Option[ClientAuth] = None,
   excludeCiphers: Vector[String] = Vector.empty,
-  excludeProtocols: Vector[String] = Vector.empty
+  excludeProtocols: Vector[String] = Vector.empty,
+  async: Boolean = false
 )
 
 object JettyOptions {

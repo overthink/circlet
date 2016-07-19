@@ -1,11 +1,13 @@
 package com.markfeeney.circlet
 
-import java.io.{InputStream, OutputStream, FileInputStream}
+import java.io.{FileInputStream, InputStream, OutputStream}
 import java.security.cert.X509Certificate
 import java.util.Locale
-import collection.JavaConverters._
+import javax.servlet.http.{HttpServletRequest, HttpServletResponse}
 
-import javax.servlet.http.{HttpServletResponse, HttpServletRequest}
+import scala.collection.JavaConverters._
+import scala.concurrent.Await
+import scala.concurrent.duration.Duration
 
 /**
  * Functionaliy for translating between Servlet world and Circlet world.
@@ -104,6 +106,8 @@ object Servlet {
         Cleanly(new FileInputStream(file))(_.close()) { fis =>
           setBody(servletResponse, StreamBody(fis))
         }
+      case FutureBody(futureBody) =>
+        setBody(servletResponse, Await.result(futureBody, Duration.Inf))
     }
   }
 

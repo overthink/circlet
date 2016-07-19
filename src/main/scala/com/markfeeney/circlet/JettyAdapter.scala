@@ -1,12 +1,16 @@
 package com.markfeeney.circlet
 
-import javax.servlet.http.{HttpServletResponse, HttpServletRequest}
-import com.markfeeney.circlet.JettyOptions.ClientAuth.{Want, Need}
+import java.util.concurrent.Executors
+import javax.servlet.http.{HttpServletRequest, HttpServletResponse}
+
+import com.markfeeney.circlet.JettyOptions.ClientAuth.{Need, Want}
 import com.markfeeney.circlet.JettyOptions.SslStoreConfig.{Instance, Path}
 import org.eclipse.jetty.server.{Request => JettyRequest, _}
 import org.eclipse.jetty.server.handler.AbstractHandler
 import org.eclipse.jetty.util.ssl.SslContextFactory
 import org.eclipse.jetty.util.thread.{QueuedThreadPool, ThreadPool}
+
+import scala.concurrent.{ExecutionContext, Future}
 
 /**
  * Functionality for running handlers on Jetty.
@@ -113,16 +117,27 @@ object JettyAdapter {
           baseRequest: JettyRequest,
           request: HttpServletRequest,
           response: HttpServletResponse): Unit = {
-        val req: Request = Servlet.buildRequest(request)
-        handler(req) { optResp =>
-          val resp = optResp.getOrElse {
-            // TBD if this is a good way to handle this case
-            Response(body = "No response generated", status = 500)
+//        if (opts.async) {
+//          println("starting async")
+//          request.startAsync()
+//        }
+        val ctx = request.startAsync()
+        ctx.setTimeout(2000)
+        implicit val ec = ExecutionContext.fromExecutor(Executors.newCachedThreadPool())
+        Future {
+          val req: Request = Servlet.buildRequest(request)
+          handler(req) { optResp =>
+            val resp: Response = optResp.getOrElse {
+              // TBD if this is a good way to handle this case
+              Response(body = "No response generated", status = 500)
+            }
+            Servlet.updateServletResponse(response, resp)
+            baseRequest.setHandled(true)
+            ctx.complete()
+            Sent
           }
-          Servlet.updateServletResponse(response, resp)
-          Sent
         }
-        baseRequest.setHandled(true)
+        println(s"${Thread.currentThread().getName} - done handle()")
       }
     }
 
