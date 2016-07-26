@@ -41,10 +41,10 @@ showing how to get a running Circlet app.
 
 In priority order:
 
-1. Small: few core classes, no special tooling required
+1. Small: few classes, few dependencies, no special tooling
 1. Composable
 1. Maintainable code
-1. Type safe
+1. Type safe enough
 1. Fast enough
 
 ## Design
@@ -111,7 +111,7 @@ Circlet's CPS approach is borrowed from
 
 ## TODO
 
-* Async handlers
+* Async handlers?
 * Middleware
   * ~~regular params (query string, post body)~~
   * ~~cookies~~
@@ -126,6 +126,14 @@ Circlet's CPS approach is borrowed from
 * A CPS handler could call the continuation function multiple times.  I'm not
   sure how to prevent this, (or if I should) so don't do it.  Unless you need
   to.
+
+## Other options
+
+There are a lot of Scala web libraries and frameworks out there.  Here are
+some that I feel are close in spirit to circlet.
+
+* [http4s](http://http4s.org/) - very similar to circlet, focus on async, heavy use of scalaz
+* [finagle](https://twitter.github.io/finagle/) - Twitter's big system for building high-concurrency servers
 
 ## License                                                                                                                                                                            
                                                                                                                                                                                       
