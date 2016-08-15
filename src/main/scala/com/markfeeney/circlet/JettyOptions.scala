@@ -34,6 +34,9 @@ import org.eclipse.jetty.server.Server
  * @param clientAuth Policy for client SSL authentication (i.e. Need/Want).
  * @param excludeCiphers Cipher suites to exclude when using SSL
  * @param excludeProtocols Protocols to exclude when using SSL
+ * @param webSockets Mapping of context path "e.g. /foo" to websocket instance.
+ * @param maxWsIdleTime Maximum idle time for websocket connections.
+ *
  */
 case class JettyOptions(
   join: Boolean = true,
@@ -58,7 +61,9 @@ case class JettyOptions(
   trustStorePassword: Option[String] = None,
   clientAuth: Option[ClientAuth] = None,
   excludeCiphers: Vector[String] = Vector.empty,
-  excludeProtocols: Vector[String] = Vector.empty
+  excludeProtocols: Vector[String] = Vector.empty,
+  webSockets: Map[String, JettyWebSocket] = Map.empty,
+  maxWsIdleTime: Int = 600000
 )
 
 object JettyOptions {

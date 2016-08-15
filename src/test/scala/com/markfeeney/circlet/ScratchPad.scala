@@ -1,10 +1,12 @@
 package com.markfeeney.circlet
 
-import com.markfeeney.circlet.ResponseBody.SeqBody
 import com.markfeeney.circlet.Circlet.handler
+import com.markfeeney.circlet.ResponseBody.SeqBody
 import com.markfeeney.circlet.middleware._
+import org.eclipse.jetty.websocket.api.Session
 import org.joda.time.Duration
 
+import scala.collection.mutable
 import scala.util.Random
 
 object ScratchPad {
@@ -75,6 +77,45 @@ object ScratchPad {
     JettyAdapter.run(handler(Response(body = "yo")), JettyOptions(httpPort = 8888))
   }
 
-  def main(args: Array[String]) = trivial()
+  def websocketTest(): Unit = {
+
+    val sessions = new mutable.HashSet[Session]
+    val pinger = new Thread {
+      override def run(): Unit = {
+        while(true) {
+          val sleepTime = Random.nextInt(5000)
+          sessions.synchronized {
+            println(f"connected users: ${sessions.size}%d")
+            sessions.foreach { s =>
+              s.getRemote.sendString(f"ping - will now sleep for $sleepTime%d ms")
+            }
+          }
+          Thread.sleep(sleepTime)
+        }
+      }
+    }
+    pinger.setName("pinger")
+    pinger.setDaemon(true)
+    pinger.start()
+
+    val ws = JettyWebSocket(
+      onConnect = s => {
+        println(s"${s.getRemoteAddress}: connected")
+        sessions.synchronized { sessions.add(s) }
+      },
+      onError = (s, t) => println(s"${s.getRemoteAddress}: got throwable: $t"),
+      onClose = (s, code, reason) => {
+        sessions.synchronized { sessions.remove(s) }
+        println(s"${s.getRemoteAddress}: closed, code: $code, reason: $reason")
+      },
+      onText = (s, data) => s.getRemote.sendString(data.toUpperCase),
+      onBytes = (_, _, _, _) => sys.error("bytes not supported")
+    )
+
+    val opts = JettyOptions(httpPort = 8888, webSockets = Map("/ws" -> ws, "/foobar" -> ws))
+    JettyAdapter.run(handler(Response(body = "see /ws/")), opts)
+  }
+
+  def main(args: Array[String]) = websocketTest()
 
 }

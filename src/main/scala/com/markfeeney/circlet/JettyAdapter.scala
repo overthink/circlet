@@ -1,12 +1,16 @@
 package com.markfeeney.circlet
 
-import javax.servlet.http.{HttpServletResponse, HttpServletRequest}
-import com.markfeeney.circlet.JettyOptions.ClientAuth.{Want, Need}
+import javax.servlet.http.{HttpServletRequest, HttpServletResponse}
+
+import com.markfeeney.circlet.JettyOptions.ClientAuth.{Need, Want}
 import com.markfeeney.circlet.JettyOptions.SslStoreConfig.{Instance, Path}
+import org.eclipse.jetty.server.handler.{AbstractHandler, ContextHandler, HandlerList}
 import org.eclipse.jetty.server.{Request => JettyRequest, _}
-import org.eclipse.jetty.server.handler.AbstractHandler
 import org.eclipse.jetty.util.ssl.SslContextFactory
 import org.eclipse.jetty.util.thread.{QueuedThreadPool, ThreadPool}
+import org.eclipse.jetty.websocket.api.{Session, WebSocketAdapter}
+import org.eclipse.jetty.websocket.server.WebSocketHandler
+import org.eclipse.jetty.websocket.servlet.{ServletUpgradeRequest, ServletUpgradeResponse, WebSocketCreator, WebSocketServletFactory}
 
 /**
  * Functionality for running handlers on Jetty.
@@ -102,11 +106,65 @@ object JettyAdapter {
     server
   }
 
+  private def wsAdapter(ws: JettyWebSocket) = new WebSocketAdapter {
+    override def onWebSocketConnect(s: Session): Unit = {
+      super.onWebSocketConnect(s)
+      ws.onConnect(s)
+    }
+
+    override def onWebSocketError(cause: Throwable): Unit = {
+      ws.onError(this.getSession, cause)
+    }
+
+    override def onWebSocketText(message: String): Unit = {
+      ws.onText(this.getSession, message)
+    }
+
+    override def onWebSocketBinary(payload: Array[Byte], offset: Int, len: Int): Unit = {
+      ws.onBytes(this.getSession, payload, offset, len)
+    }
+
+    override def onWebSocketClose(statusCode: Int, reason: String): Unit = {
+      try {
+        ws.onClose(this.getSession, statusCode, reason)
+      } finally {
+        super.onWebSocketClose(statusCode, reason)
+      }
+    }
+  }
+
+  private def wsCreator(ws: JettyWebSocket): WebSocketCreator = {
+    new WebSocketCreator {
+      override def createWebSocket(req: ServletUpgradeRequest, resp: ServletUpgradeResponse): AnyRef = {
+        wsAdapter(ws)
+      }
+    }
+  }
+
+  private def wsHandler(ws: JettyWebSocket, maxWsIdleTime: Int): AbstractHandler = {
+    new WebSocketHandler() {
+      override def configure(factory: WebSocketServletFactory): Unit = {
+        factory.getPolicy.setIdleTimeout(maxWsIdleTime)
+        factory.setCreator(wsCreator(ws))
+      }
+    }
+  }
+
+  private def wsHandlers(opts: JettyOptions): Seq[ContextHandler] = {
+    opts.webSockets.map { case (path, ws) =>
+      val ctx = new ContextHandler
+      ctx.setContextPath(path)
+      ctx.setHandler(wsHandler(ws, opts.maxWsIdleTime))
+      ctx
+    }.toSeq
+  }
+
   /**
    * Create, configure and start a Jetty server instance and use it to run handler.
    */
   def run(handler: Handler, opts: JettyOptions = JettyOptions()): Server = {
-    // wrap given handler in Jetty handler instance
+
+    // The main app handler gets wrapped in a single Jetty handler instance...
     val ah = new AbstractHandler {
       override def handle(
           target: String,
@@ -126,8 +184,18 @@ object JettyAdapter {
       }
     }
 
+    // ... then each websocket also gets its own handler (kind of a bolted-on
+    // approach, but it works for now). We build a big list of all handlers
+    // and register them with the server below.  Approach borrowed from
+    // https://github.com/sunng87/ring-jetty9-adapter
+    val allHandlers = (wsHandlers(opts) :+ ah)
+      .foldLeft(new HandlerList) { (acc, h) =>
+        acc.addHandler(h)
+        acc
+      }
+
     val server = createServer(opts)
-    server.setHandler(ah)
+    server.setHandler(allHandlers)
     opts.configFn(server)
 
     try {

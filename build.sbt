@@ -11,7 +11,8 @@ scalacOptions ++= Seq(
   "-Ywarn-unused-import"
 )
 libraryDependencies ++= Seq(
-  "org.eclipse.jetty" % "jetty-server" % "9.2.17.v20160517", // 9.3 needs Java 8, so stick with 9.2 for now
+  "org.eclipse.jetty" % "jetty-server" % "9.2.18.v20160721", // 9.3 needs Java 8, so stick with 9.2 for now
+  "org.eclipse.jetty.websocket" % "websocket-server" % "9.2.18.v20160721",
   "commons-fileupload" % "commons-fileupload" % "1.3.1",
   "joda-time" % "joda-time" % "2.9.4",
   "org.joda" % "joda-convert" % "1.8.1",
