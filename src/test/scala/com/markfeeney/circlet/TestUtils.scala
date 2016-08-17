@@ -1,6 +1,8 @@
 package com.markfeeney.circlet
 
-import java.net.URI
+import java.net.{ServerSocket, URI}
+
+import org.eclipse.jetty.server.Server
 
 object TestUtils {
   /**
@@ -38,7 +40,29 @@ object TestUtils {
     }
   }
 
-  /** Useful to force a handler to run. e.g. `myHandler(req)(execute)` */
-  val complete: Cont = _ => Sent
+  private def findFreePort: Int = {
+    Cleanly(new ServerSocket(0))(_.close)(_.getLocalPort).right.get
+  }
+
+  case class TestJettyServer(server: Server, opts: JettyOptions)
+
+  // disable logging from Jetty
+  org.eclipse.jetty.util.log.Log.setLog(new NoJettyLogging)
+
+  /**
+   * Bootstrap a server using given options and handler, and run f on said
+   * server, ensuring we clean up.
+   */
+  def testServer(h: Handler, opts: JettyOptions)(f: TestJettyServer => Unit): Unit = {
+    val opts0 = opts.copy(
+      join = false,
+      httpPort = findFreePort,
+      sslPort = if (opts.allowSsl) findFreePort else opts.sslPort
+    )
+    val result = Cleanly(JettyAdapter.run(h, opts0))(_.stop()) { server =>
+      f(TestJettyServer(server, opts0))
+    }
+    result.left.foreach(e => throw e)
+  }
 
 }

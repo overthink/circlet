@@ -1,9 +1,8 @@
 package com.markfeeney.circlet.middleware
 
 import com.markfeeney.circlet.Circlet.handler
-import com.markfeeney.circlet.TestUtils.complete
+import com.markfeeney.circlet._
 import com.markfeeney.circlet.middleware.Cookies.{Decoder, Encoder, RequestCookies, ResponseCookies}
-import com.markfeeney.circlet.{Circlet, Request, Response, Util}
 import org.joda.time.{DateTime, Period}
 import org.scalatest.FunSuite
 
@@ -15,7 +14,7 @@ class CookiesTest extends FunSuite {
       cookies = Cookies.get(req)
       Response()
     }
-    Cookies.mw(decoder = decoder)(h)(req)(complete)
+    Cookies.mw(decoder = decoder)(h)(req)(_ => Sent)
     cookies
   }
 

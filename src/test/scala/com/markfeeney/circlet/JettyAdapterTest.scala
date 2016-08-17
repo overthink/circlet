@@ -1,25 +1,25 @@
 package com.markfeeney.circlet
 
-import java.net.ServerSocket
-import javax.servlet.http.{HttpServletResponse, HttpServletRequest}
-import scala.collection.JavaConverters._
+import javax.servlet.http.{HttpServletRequest, HttpServletResponse}
+
+import com.markfeeney.circlet.TestUtils.TestJettyServer
 import com.mashape.unirest.http
 import com.mashape.unirest.http.Unirest
 import com.mashape.unirest.http.exceptions.UnirestException
 import org.apache.http.conn.ssl.{SSLConnectionSocketFactory, TrustSelfSignedStrategy}
 import org.apache.http.impl.client.HttpClients
 import org.apache.http.ssl.SSLContextBuilder
-import org.eclipse.jetty.server.{Request=>JettyRequest, _}
 import org.eclipse.jetty.server.handler.AbstractHandler
+import org.eclipse.jetty.server.{Request => JettyRequest, _}
 import org.eclipse.jetty.util.thread.QueuedThreadPool
 import org.scalatest.FunSuite
+
+import scala.collection.JavaConverters._
 
 class JettyAdapterTest extends FunSuite {
 
   // Someday I'll regret changing these global logging settings here, but I'm lazy
 
-  // disable logging from Jetty
-  org.eclipse.jetty.util.log.Log.setLog(new NoJettyLogging)
   // disable commons logging (unirest uses httpcomponents which uses commons logging...)
   System.setProperty("org.apache.commons.logging.Log", "org.apache.commons.logging.impl.NoOpLog")
 
@@ -32,26 +32,8 @@ class JettyAdapterTest extends FunSuite {
   }
   makeUnirestAllowSelfSignedCerts()
 
-  private def findFreePort: Int = {
-    Cleanly(new ServerSocket(0))(_.close)(_.getLocalPort).right.get
-  }
-
-  private case class TestServer(server: Server, opts: JettyOptions)
-
-  private def testServer(h: Handler, opts: JettyOptions)(f: TestServer => Unit): Unit = {
-    val opts0 = opts.copy(
-      join = false,
-      httpPort = findFreePort,
-      sslPort = if (opts.allowSsl) findFreePort else opts.sslPort // if testing ssl, generate random ssl port
-    )
-    val result = Cleanly(JettyAdapter.run(h, opts0))(_.stop()) { server =>
-      f(TestServer(server, opts0))
-    }
-    result.left.foreach(e => throw e)
-  }
-
-  private def testServer(opts: JettyOptions)(f: TestServer => Unit): Unit = {
-    testServer(helloWorld, opts)(f)
+  private def testServer(opts: JettyOptions)(f: TestJettyServer => Unit): Unit = {
+    TestUtils.testServer(helloWorld, opts)(f)
   }
 
   private def helloWorld: Handler = Circlet.handler { _ =>
@@ -75,7 +57,7 @@ class JettyAdapterTest extends FunSuite {
   }
 
   test("http smoke test") {
-    testServer(JettyOptions()) { case TestServer(server, opts) =>
+    testServer(JettyOptions()) { case TestJettyServer(server, opts) =>
       assertHelloWorld(Http, opts.httpPort)
       withClue("ssl disabled by default") {
         val e = intercept[UnirestException](get(Https, opts.sslPort))
@@ -93,7 +75,7 @@ class JettyAdapterTest extends FunSuite {
   }
 
   test("ssl (only) smoke test") {
-    testServer(enableSsl(JettyOptions(allowHttp = false))) { case TestServer(server, opts) =>
+    testServer(enableSsl(JettyOptions(allowHttp = false))) { case TestJettyServer(server, opts) =>
       assertHelloWorld(Https, opts.sslPort)
       withClue("plaintext connections to ssl port don't work") {
         val e = intercept[UnirestException](get(Http, opts.sslPort))
@@ -107,7 +89,7 @@ class JettyAdapterTest extends FunSuite {
   }
 
   test("http and ssl both enabled") {
-    testServer(enableSsl(JettyOptions())) { case TestServer(server, opts) =>
+    testServer(enableSsl(JettyOptions())) { case TestJettyServer(server, opts) =>
       assertHelloWorld(Http, opts.httpPort)
       assertHelloWorld(Https, opts.sslPort)
     }
@@ -118,15 +100,15 @@ class JettyAdapterTest extends FunSuite {
   }
 
   test("server connectors are setup correctly") {
-    testServer(JettyOptions(allowHttp = false)) { case TestServer(server, _) =>
+    testServer(JettyOptions(allowHttp = false)) { case TestJettyServer(server, _) =>
       // bizarre case, theoretically connectors could be added by configFn
       assert(0 == server.getConnectors.length)
     }
-    testServer(JettyOptions(allowHttp = true)) { case TestServer(server, _) =>
+    testServer(JettyOptions(allowHttp = true)) { case TestJettyServer(server, _) =>
       assert(1 == server.getConnectors.length)
       assert(factories(server.getConnectors.head).head.isInstanceOf[HttpConnectionFactory])
     }
-    testServer(JettyOptions(allowHttp = true, allowSsl = true)) { case TestServer(server, _) =>
+    testServer(JettyOptions(allowHttp = true, allowSsl = true)) { case TestJettyServer(server, _) =>
       val cons: Array[Connector] = server.getConnectors
       val httpConn = cons(0)
       val sslConn = cons(1)
@@ -142,7 +124,7 @@ class JettyAdapterTest extends FunSuite {
   }
 
   test("thread pool non-daemon by default") {
-    testServer(JettyOptions()) { case TestServer(server, _) =>
+    testServer(JettyOptions()) { case TestJettyServer(server, _) =>
       assert(server.getThreadPool.isInstanceOf[QueuedThreadPool])
       val p = server.getThreadPool.asInstanceOf[QueuedThreadPool]
       assert(!p.isDaemon)
@@ -151,7 +133,7 @@ class JettyAdapterTest extends FunSuite {
 
   // create server with opts, then inspect server to see if settings are actually applied
   private def assertThreadPool(opts: JettyOptions): Unit = {
-    testServer(opts) { case TestServer(server, _) =>
+    testServer(opts) { case TestJettyServer(server, _) =>
       assert(server.getThreadPool.isInstanceOf[QueuedThreadPool])
       val p = server.getThreadPool.asInstanceOf[QueuedThreadPool]
       assert(p.getMaxThreads == opts.maxThreads)
@@ -174,7 +156,7 @@ class JettyAdapterTest extends FunSuite {
       s.setHandler(noopHandler)
     }
     val opts = JettyOptions(daemonThreads = true, configFn = f)
-    testServer(helloWorld, opts) { case TestServer(server, _) =>
+    TestUtils.testServer(helloWorld, opts) { case TestJettyServer(server, _) =>
       assert(!server.getThreadPool.asInstanceOf[QueuedThreadPool].isDaemon)
       assert(server.getHandler eq noopHandler, "Handler is not the default helloWorld handler")
     }
@@ -199,7 +181,7 @@ class JettyAdapterTest extends FunSuite {
       responseHeaderSize = 11000,
       sendServerVersion = false
     )
-    testServer(opts) { case TestServer(server, _) =>
+    testServer(opts) { case TestJettyServer(server, _) =>
       val cons: Array[Connector] = server.getConnectors
       val httpConn = cons(0)
       val sslConn = cons(1)

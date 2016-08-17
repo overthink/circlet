@@ -17,7 +17,8 @@ libraryDependencies ++= Seq(
   "joda-time" % "joda-time" % "2.9.4",
   "org.joda" % "joda-convert" % "1.8.1",
   "org.scalatest" % "scalatest_2.11" % "2.2.6" % "test",
-  "com.mashape.unirest" % "unirest-java" % "1.4.9" % "test"
+  "com.mashape.unirest" % "unirest-java" % "1.4.9" % "test",
+  "org.eclipse.jetty.websocket" % "websocket-client" % "9.2.18.v20160721" % "test"
 )
 
 // Stuff related to publishing to sonatype
