@@ -132,7 +132,7 @@ val upper = JettyWebSocket(
 )
 val opts = JettyOptions(webSockets = Map("/upper/" -> upper))
 val app = handler { req => Response(body = "websocket example, connect to ws://upper/") }
-JettyAdapter.run(app)
+JettyAdapter.run(app, opts)
 ```
 
 ## TODO
