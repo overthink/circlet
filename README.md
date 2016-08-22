@@ -10,15 +10,20 @@ val app = handler { req => Response(body = "Hello world!") }
 JettyAdapter.run(app)
 ```
 
-Circlet is a simple Scala web application library.  Circlet abstracts away the
-underlying web server and allows you to write your application as a plain function
-of type `Request => Option[Response]` (also called a `Handler`).
+Circlet is a simple Scala web application library.  Circlet allows you to
+write your application as a plain function of type `Request =>
+Option[Response]` (also called a `Handler`).
 
 Composable middleware functions of type `Handler => Handler` are used to add
 reusable functionality to handlers.  Circlet includes some useful middleware
 like parameter parsing (including multipart, i.e. file upload), and cookie
 handling. For routing and higher-level functionality, see
 [Usher](https://github.com/overthink/usher).
+
+Circlet attempts to abstract away the underlying web server, but it's somewhat
+theoretical, since only Jetty is currently supported.
+
+Circlet also supports websockets, [see below](#websockets).
 
 Circlet aims to be in roughly the same space as other web server interfaces
 like [WSGI](https://wsgi.readthedocs.io/en/latest/),
@@ -31,7 +36,7 @@ Circlet, and large parts of Circlet are ported directly from it.
 Latest release:
 
 ```scala
-libraryDependencies += "com.markfeeney" % "circlet_2.11" % "0.1.0"
+libraryDependencies += "com.markfeeney" % "circlet_2.11" % "0.2.0"
 ```
 
 There is also an [example circlet project](https://github.com/overthink/circlet-example) 
@@ -109,17 +114,33 @@ Circlet's CPS approach is borrowed from
 [WAI](https://hackage.haskell.org/package/wai-3.2.1/docs/Network-Wai.html)
 (thanks [stebulus](https://github.com/stebulus)).
 
+## <a name="websockets"></a>Websockets
+
+As of 0.2.0, Criclet supports websockets.  These are somewhat bolted on,
+unfortunately: they're Jetty-specific and do not take part in middleware.  Regular handlers still
+behave as normal, but a separate mapping of paths to websocket implementations
+is provided to the server at creation time.  Here is a simple example that
+returns whatever it is sent, converted to uppercase.
+
+```scala
+import com.markfeeney.circlet.Circlet.handler
+import com.markfeeney.circlet.{JettyAdapter, JettyOptions, Response}
+import com.markfeeney.circlet.JettyWebSocket
+
+val upper = JettyWebSocket(
+  onText = (session, msg) => session.getRemote.sendString(msg.toUpperCase)
+)
+val opts = JettyOptions(webSockets = Map("/upper/" -> upper))
+val app = handler { req => Response(body = "websocket example, connect to ws://upper/") }
+JettyAdapter.run(app)
+```
+
 ## TODO
 
-* Async handlers?
-* Middleware
-  * ~~regular params (query string, post body)~~
-  * ~~cookies~~
-  * ~~multipart params (i.e. file upload)~~
-  * ~~sessions~~ (deferred)
-  * serve static resources/files
-* Separate Jetty-specific bits into separate project
-* Support other web servers besides Jetty
+* Better understand websocket threading model
+* Async handlers? (not yet convinced that I care)
+* Make websockets use [JSR 356](https://jcp.org/en/jsr/detail?id=356) rather than Jetty-specific classes
+* Support other web servers besides Jetty?
 
 ## Known issues
 

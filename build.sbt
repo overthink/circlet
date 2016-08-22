@@ -1,5 +1,5 @@
 name := "circlet"
-version := "0.2.0-SNAPSHOT"
+version := "0.2.0"
 organization := "com.markfeeney"
 scalaVersion := "2.11.8"
 scalacOptions ++= Seq(
